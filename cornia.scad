@@ -19,12 +19,13 @@ sides_radius_slack = 0.25;
 
 // wire lanes variables
 
-lane_width = 1.8;
+lane_width = 1.6;
+move_fraction = 2.85;
 
 
+stagger = [0, 2, 8, 2, -7, -7]; // max difference between neigbour columns is 9mm could mby push 10mm 
 
-stagger = [0, 2, 9, 2, -8, -8]; // max difference between neigbour columns is 10mm 
-//difference(){
+difference(){
     union(){
     for(x = [0:5]){
         for(y = [0:2]){
@@ -38,43 +39,66 @@ stagger = [0, 2, 9, 2, -8, -8]; // max difference between neigbour columns is 10
     }
     }
 
-    move_fraction = 3;
+    
     // wire lanes
     union(){
-        for (y = [0:1]){
+        for (y = [0:2]){
             for(x = [0:5]){
-                if(x != 5 ){ 
-                    translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
-                    //translate([0, 0, 5])
-                    linear_extrude(2)
-                    polygon([
-                        [2 + x*18, 17*y + 13 + stagger[x]],
-                        [16.5 + x*18, 17*y + 13 + stagger[x] + (stagger[x + 1] - stagger[x])/move_fraction],
-                        [2.01 + (x+1)*18, 17*y + 13 + stagger[x+1]],   
-                        [2.01 + (x+1)*18, 17*y + 13 + lane_width + stagger[x+1]],      
-                        [16.5 + x*18, 17*y + 13 + lane_width + stagger[x] + (stagger[x + 1] - stagger[x])/move_fraction],
-                        [2 + x*18, 17*y + 13 + lane_width + stagger[x]]
-                    ]);
-                    
-              
+                if(x != 5){ 
+                    if(x == 4 && y == 2){
+                        row_lane(x, y, true);
+                    }else{
+                        row_lane(x, y, false);
+                    }
+                   
                 }else{
-                    if(y == 0){
-                        translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
-                        //translate([0, 0, 5])
-                        linear_extrude(2)
-                        polygon([
-                            [2 + x*18, 13 + stagger[x]],
-                            [14 + x*18, 13 + stagger[x]],     
-                            [14 + x*18, 13 + lane_width + stagger[x]],
-                            [2 + x*18, 13 + lane_width + stagger[x]]
-                        ]);
+                    if(y != 2){
+                        row_lane(x, y, true);
                     }
                 }
             }
         }
     }
-//}
+}
 
+// Int stagger_index is the index of the key column
+// Boolean end of loop and keyboard
+module row_lane(x, y, end){
+    if(end){
+        translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+        //translate([0, 0, 5])
+        linear_extrude(2)
+        polygon([
+            [2 + x*18, 17*y + 13 + stagger[x]],
+            [14 + x*18, 17*y + 13 + stagger[x]],     
+            [14 + x*18, 17*y + 13 + lane_width + stagger[x]],
+            [2 + x*18, 17*y + 13 + lane_width + stagger[x]]
+        ]);
+    }else{
+        translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+        //translate([0, 0, 5])
+        linear_extrude(2)
+        if (x != 0){
+            polygon([
+                [2 + x*18, 17*y + 13 + stagger[x]],
+                [16.5 + x*18, 17*y + 13 + stagger[x] + (stagger[x + 1] - stagger[x])/move_fraction],
+                [2.01 + (x+1)*18, 17*y + 13 + stagger[x+1]],   
+                [2.01 + (x+1)*18 + (stagger[x] - stagger[x+1])/8, 17*y + 13 + lane_width + stagger[x+1]],      
+                [16.5 + x*18 + (stagger[x] - stagger[x+1])/8, 17*y + 13 + lane_width + stagger[x] + (stagger[x + 1] - stagger[x])/move_fraction],
+                [2 + x*18 + (stagger[x - 1] - stagger[x])/8, 17*y + 13 + lane_width + stagger[x]]
+            ]);
+        }else{
+            polygon([
+                [2 + x*18, 17*y + 13 + stagger[x]],
+                [16.5 + x*18, 17*y + 13 + stagger[x] + (stagger[x + 1] - stagger[x])/move_fraction],
+                [2.01 + (x+1)*18, 17*y + 13 + stagger[x+1]],   
+                [2.01 + (x+1)*18 + (stagger[x] - stagger[x+1])/8, 17*y + 13 + lane_width + stagger[x+1]],      
+                [16.5 + x*18 + (stagger[x] - stagger[x+1])/8, 17*y + 13 + lane_width + stagger[x] + (stagger[x + 1] - stagger[x])/move_fraction],
+                [2 + x*18, 17*y + 13 + lane_width + stagger[x]]
+            ]);
+        }
+    }
+}
 
 
 

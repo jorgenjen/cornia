@@ -6,29 +6,77 @@ plate_slack = 0.05;
 plate_depth_slack = 0.05;
 
 // Hotswap slack variables:
-width_padding = 0.09;
-height_padding = 0.09;
+width_padding = 0.25;
+height_padding = 0.25;
 exit_padding = 0.5;
 ledge_width = 0.5;
 
 hotswap_height_slack = 0;
 
 // 3 mid plate hole radius:
-center_radius_slack = 0.3;
-sides_radius_slack = 0.2;
+center_radius_slack = 0.35;
+sides_radius_slack = 0.25;
 
-stagger = [0, 2, 7, 2, -6, -6];
+// wire lanes variables
 
-for(x = [0:5]){
-    for(y = [0:2]){
-        if(!(x == 5 && y == 2)){ // to get two 
-        
-            translate([18*x, y*17 + stagger[x], 0])
-            key();
+lane_width = 1.8;
+
+
+
+stagger = [0, 2, 9, 2, -8, -8]; // max difference between neigbour columns is 10mm 
+//difference(){
+    union(){
+    for(x = [0:5]){
+        for(y = [0:2]){
+            if(!(x == 5 && y == 2)){ // to get two 
             
+                translate([18*x, y*17 + stagger[x], 0])
+                key();
+                
+            }
         }
     }
-}
+    }
+
+    move_fraction = 3;
+    // wire lanes
+    union(){
+        for (y = [0:1]){
+            for(x = [0:5]){
+                if(x != 5 ){ 
+                    translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+                    //translate([0, 0, 5])
+                    linear_extrude(2)
+                    polygon([
+                        [2 + x*18, 17*y + 13 + stagger[x]],
+                        [16.5 + x*18, 17*y + 13 + stagger[x] + (stagger[x + 1] - stagger[x])/move_fraction],
+                        [2.01 + (x+1)*18, 17*y + 13 + stagger[x+1]],   
+                        [2.01 + (x+1)*18, 17*y + 13 + lane_width + stagger[x+1]],      
+                        [16.5 + x*18, 17*y + 13 + lane_width + stagger[x] + (stagger[x + 1] - stagger[x])/move_fraction],
+                        [2 + x*18, 17*y + 13 + lane_width + stagger[x]]
+                    ]);
+                    
+              
+                }else{
+                    if(y == 0){
+                        translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+                        //translate([0, 0, 5])
+                        linear_extrude(2)
+                        polygon([
+                            [2 + x*18, 13 + stagger[x]],
+                            [14 + x*18, 13 + stagger[x]],     
+                            [14 + x*18, 13 + lane_width + stagger[x]],
+                            [2 + x*18, 13 + lane_width + stagger[x]]
+                        ]);
+                    }
+                }
+            }
+        }
+    }
+//}
+
+
+
 
 module key(){
     // plate part
@@ -130,8 +178,8 @@ module key(){
 }
 
 
-translate([0, -2, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
-edge(18);
+//translate([0, -2, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+//edge(18);
 
 module edge(length){
     difference(){

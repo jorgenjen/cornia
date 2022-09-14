@@ -8,8 +8,8 @@ plate_depth_slack = 0.05;
 // Hotswap slack variables:
 width_padding = 0.09;
 height_padding = 0.09;
-radius_padding = 0.5;
 exit_padding = 0.5;
+ledge_width = 0.5;
 
 hotswap_height_slack = 0;
 
@@ -24,16 +24,11 @@ for(x = [0:5]){
         if(!(x == 5 && y == 2)){ // to get two 
         
             translate([18*x, y*17 + stagger[x], 0])
-            // per key component
             key();
             
         }
     }
 }
-translate([1, -1, 2])
-rotate([0, 90, 0])
-cylinder(h = 5, r = 0.7);
-
 
 module key(){
     // plate part
@@ -55,12 +50,10 @@ module key(){
     }
 
     // Hotswap part
-
-    
     difference(){
         difference(){
             translate([0, 0, -3 - hotswap_height_slack - 0.9 - plate_depth_slack])
-            color("#eee")
+            color("green")
             linear_extrude(3 - hotswap_height_slack)
             square([18,17]);
            
@@ -82,12 +75,28 @@ module key(){
                         [0 - width_padding, 5.75]
                     ]);
                 }   
-                translate([2.325, 2.275, 0])
-                    cylinder(h = 10.45, r = 1.45 + radius_padding);
-                
-                color("purple")
-                translate([4.525, 7.275, 0])
-                    cylinder(h = 10.45, r = 1.45 + radius_padding);
+            
+                linear_extrude(4.2, center = false){
+                    polygon(points=[
+                        [4.65 + width_padding, 3.75 + ledge_width* 1.5],
+                        [6.85 - ledge_width + width_padding, 3.75 + ledge_width * 1.5],
+                        [6.85 - ledge_width + width_padding, 9.55 - ledge_width + height_padding],
+                        [2.2 + ledge_width - width_padding, 9.55 - ledge_width + height_padding],
+                        [2.2 + ledge_width - width_padding, 5.75 + ledge_width]
+
+                    ]);
+                } 
+
+                linear_extrude(4.2, center = false){
+                    polygon(points=[
+                        [0 + ledge_width - width_padding, 0 + ledge_width - height_padding],
+                        [4.65 - ledge_width + width_padding, 0 + ledge_width - height_padding],
+                        [4.65 - ledge_width + width_padding, 3.75 - ledge_width],
+                        [2.2 - width_padding, 5.75 - ledge_width * 1.5],
+                        [0 + ledge_width - width_padding, 5.75 - ledge_width * 1.5]
+
+                    ]);
+                } 
                 
                 color("orange")
                 translate([1.485 - exit_padding/2, -2.66 - height_padding, 0])
@@ -107,14 +116,30 @@ module key(){
         color("indigo")
         translate([3.5+1, 8.5, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
             cylinder(h = 10, r = 0.9 + sides_radius_slack);
-        color("blue")
-        translate([3.8, 7, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
-        cube([1.4, 1, 2.2]);
+        
+        // A cube to subtract to make the print quality better as the hole is too close to the hotswap part
+        color("red")
+        translate([3.6, 7, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+            cube([1.8, 1, 2.2]);
         
 
         
         translate([14.5+1, 8.5, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
             cylinder(h = 10, r = 0.9 + sides_radius_slack);
+    }
+}
+
+
+translate([0, -2, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+edge(18);
+
+module edge(length){
+    difference(){
+        cube([length, 2, 5.2]);
+        translate([-0.01, -1.415, 4.612])
+        rotate([-45, 0, 0])
+        color("black")
+        cube([length + 0.02, 2, 3]);
     }
 }
 

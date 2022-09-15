@@ -1,5 +1,5 @@
 // special openscad variables
-$fn = 16;
+$fn = 10;
 
 // Plate slack variables:
 plate_slack = 0.05;
@@ -23,25 +23,25 @@ lane_width = 1.6;
 move_fraction = 2.85;
 
 
-stagger = [0, 2, 8, 2, -7, -7]; // max difference between neigbour columns is 9mm could mby push 10mm 
+stagger = [0, 2, 8, 2, -7, -7]; // max difference between neigbour columns is 9mm 
 
 difference(){
     union(){
-    for(x = [0:5]){
-        for(y = [0:2]){
-            if(!(x == 5 && y == 2)){ // to get two 
-            
-                translate([18*x, y*17 + stagger[x], 0])
-                key();
+        for(x = [0:5]){
+            for(y = [0:2]){
+                if(!(x == 5 && y == 2)){ // to get two 
                 
+                    translate([18*x, y*17 + stagger[x], 0])
+                    key();
+                    
+                }
             }
         }
     }
-    }
-
     
     // wire lanes
     union(){
+        
         for (y = [0:2]){
             for(x = [0:5]){
                 if(x != 5){ 
@@ -55,11 +55,21 @@ difference(){
                     if(y != 2){
                         row_lane(x, y, true);
                     }
+                    if(y == 1){
+                        //translate([18 * x, 6.85 + width_padding - 0.7 - 1.68 + stagger[x], -5])
+                           // cube([lane_width, 17 + , 2]);
                 }
+                }
+                translate([18 * x - 0.1, 3.862 - exit_padding/2 + stagger[x], -5])
+                            cube([lane_width, 17 + 1.68 + exit_padding, 2]);
+                
+                
             }
         }
     }
 }
+
+
 
 // Int stagger_index is the index of the key column
 // Boolean end of loop and keyboard
@@ -171,7 +181,7 @@ module key(){
                 } 
                 
                 color("orange")
-                translate([1.485 - exit_padding/2, -2.66 - height_padding, 0])
+                                    translate([1.485 - exit_padding/2, -2.66 - height_padding, 0])
                     cube([1.68 + exit_padding, 2.67, 2.2]);
                 color("pink")
                 translate([3.685 - exit_padding/2, 9.54 + height_padding, 0])
@@ -213,5 +223,21 @@ module edge(length){
         color("black")
         cube([length + 0.02, 2, 3]);
     }
+}
+
+
+// new code for thumb cluster
+translate([18, -20.5, 0])
+union(){
+    rotate(20)
+        key();
+        
+    translate([-14.73, -10.32, 0])
+    rotate(35)
+        key();
+
+    translate([-28.1, -22.36, 0])
+    rotate(42)
+        key();
 }
 

@@ -70,6 +70,113 @@ difference(){
 }
 
 
+module inner_corner(){
+    translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+    union(){
+        translate([0, 0, 3.2])
+        union(){  
+            translate([0, 0, 0])
+            intersection(){
+                cube([2, 2, 2]);
+                translate([0, 2, 0])
+                rotate([0, 90, 0])
+                cylinder(h=2, r=2);
+            }
+
+            translate([0, 2, 0])
+            rotate(270)
+            intersection(){
+                cube([2, 2, 2]);
+                translate([0, 2, 0])
+                rotate([0, 90, 0])
+                cylinder(h=2, r=2);
+            }
+        }
+
+        translate([0, 0, 2])
+        cube([2, 2, 1.2]);
+
+        translate([0, 0, 2])
+        rotate([0, 180, -90])
+        union(){  
+            translate([0, 0, 0])
+            intersection(){
+                cube([2, 2, 2]);
+                translate([0, 2, 0])
+                rotate([0, 90, 0])
+                cylinder(h=2, r=2);
+            }
+
+            translate([0, 2, 0])
+            rotate(270)
+            intersection(){
+                cube([2, 2, 2]);
+                translate([0, 2, 0])
+                rotate([0, 90, 0])
+                cylinder(h=2, r=2);
+            }
+        }
+    }
+}
+
+module outer_corner(){
+    translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+    union(){
+        translate([2, 2, 3.2])
+        rotate([0, 0, 180])
+        intersection(){
+            sphere(r = 2);
+            cube([4, 4, 4]);
+        }
+
+
+        translate([0, 2, 3.2])
+        rotate([90, 90, 0])
+        intersection(){
+            cube([1.2, 2, 2]);
+            translate([0, 2, 0])
+            rotate([0, 90, 0])
+            cylinder(h=1.3, r=2);
+        }
+
+
+        translate([2, 2, 2])
+        rotate([0, 180, 90])
+        intersection(){
+            sphere(r = 2);
+            cube([4, 4, 4]);
+        }
+    }
+}  
+  
+
+module edge(length){
+    translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+    union(){
+        translate([0, 0, 3.2])
+        intersection(){
+            cube([length, 2, 2]);
+            translate([0, 2, 0])
+            rotate([0, 90, 0])
+            cylinder(h=length, r=2);
+        }
+
+
+        translate([0, 0, 2])
+        cube([length, 2, 1.2]);
+
+        translate([0, 2, 0])
+        rotate([90, 0, 0])
+        intersection(){
+            cube([length, 2, 2]);
+            translate([0, 2, 0])
+            rotate([0, 90, 0])
+            cylinder(h=length, r=2);
+        }
+    }
+}
+
+
 
 // Int stagger_index is the index of the key column
 // Boolean end of loop and keyboard
@@ -212,18 +319,19 @@ module key(){
 }
 
 
-//translate([0, -2, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
-//edge(18);
+translate([0, -2, 0])
+inner_corner();
 
-module edge(length){
-    difference(){
-        cube([length, 2, 5.2]);
-        translate([-0.01, -1.415, 4.612])
-        rotate([-45, 0, 0])
-        color("black")
-        cube([length + 0.02, 2, 3]);
-    }
-}
+//module edge(length){
+  //  difference(){
+    //    cube([length, 2, 5.2]);
+      //  translate([-0.01, -1.415, 4.612])
+        //
+//        rotate([-45, 0, 0])
+//        color("black")
+//        cube([length + 0.02, 2, 3]);
+//    }
+//}
 
 
 // new code for thumb cluster
@@ -240,4 +348,10 @@ union(){
     rotate(42)
         key();
 }
+
+
+
+
+
+
 

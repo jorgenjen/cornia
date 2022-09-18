@@ -1,5 +1,5 @@
 // special openscad variables
-$fn = 20;
+$fn = 36;
 
 // Plate slack variables:
 plate_slack = 0.05;
@@ -505,8 +505,8 @@ union(){
 // static code to finish frame for now:
 
 
-translate([18*4 - 28, stagger[4] - 2, 0])
-edge(28);
+translate([18*4 - 26.9, stagger[4] - 2, 0])
+edge(26.9);
 
 
 
@@ -535,6 +535,37 @@ edge(17.9);
 translate([-8.79 - 1.44, stagger[4] - 37.3 - 1.35, 0])
 rotate(42)
 outer_corner();
+
+color("pink")
+translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+linear_extrude(5.2)
+polygon([
+    [18*4, stagger[3]],
+    [18*4, stagger[4]],
+    [18*4 - 26.9, stagger[4]],
+    [18*4 - 32.65, stagger[4] - 5.7],
+    [18*2 - 1.25, stagger[4] - 7.4],
+    [28.9, 2],
+    [36, 2],
+    [36, 8],
+    [54, 8],
+    [54, 2],
+    [18*4, stagger[3]]
+]);
+
+color("blue")
+translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack + 1])
+linear_extrude(5.2)
+polygon([
+    [28.9, 2],
+    [18, 2],
+    [18, 0],
+    [0, 0],
+    [0, -12.35],
+    [8.3, -6.61],
+    [17.5, -20.5],
+    [10.4, -6.5],
+]);
 
 
 

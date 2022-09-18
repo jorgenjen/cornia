@@ -1,5 +1,5 @@
 // special openscad variables
-$fn = 10;
+$fn = 20;
 
 // Plate slack variables:
 plate_slack = 0.05;
@@ -25,17 +25,162 @@ move_fraction = 2.85;
 
 stagger = [0, 2, 8, 2, -7, -7]; // max difference between neigbour columns is 9mm 
 
+   
+
+//mirror() use mirror to get left hand
 difference(){
     union(){
         for(x = [0:5]){
             for(y = [0:2]){
-                if(!(x == 5 && y == 2)){ // to get two 
+                if(!(x == 5 && y == 2)){ // to get two on last pinky column
                 
                     translate([18*x, y*17 + stagger[x], 0])
-                    key();
+                    key();                  
                     
                 }
             }
+
+            if(x > 3){
+                translate([18*x, stagger[x] - 2, 0])
+                edge(18);
+            }
+            
+            if(x == 0){
+                translate([18*x + 16, stagger[x] + 17*3 + 2, 0])
+                rotate(180)
+                edge(16);
+
+                translate([18*x + 16, stagger[x] + 17*3 + 2, 0])
+                rotate(270)
+                inner_corner();
+                
+                // buggy from here 
+                //translate([18*x + 16, 17*3 + 3, 1])
+                //rotate([0, 0, 270])
+                //edge(stagger[x + 1] - stagger[x] - 2);
+                
+
+                translate([18*x + 16, + 17*3 + 4, 0])
+                rotate(270)
+                outer_corner();
+
+                // to here 
+
+            }
+            else if(x == 5){
+                color("pink")
+                translate([18*x + 18 + 2, stagger[x] + 17*2 + 2, 0])
+                rotate(180)
+                edge(16);
+
+                translate([18*x + 4 , stagger[x] + 17*2 + 2, 0])
+                rotate(180)
+                inner_corner();
+                
+
+                translate([18*x , stagger[x] + 17*2, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+                color("red")
+                cube([2, stagger[x-1] - stagger[x] + 17, 5.2]);
+                
+                translate([18*x + 4, stagger[x] + 17*2 + 2, 0])
+                rotate(90)
+                edge(stagger[x-1] - stagger[x] - 2 + 17);
+
+                translate([18*x + 4, stagger[x] + 17*2 + 2 + stagger[x-1] - stagger[x] + 17, 0])
+                rotate(180)
+                outer_corner();
+
+                color("pink")
+                translate([18*x + 2, stagger[x-1] + 17*3 + 2, 0])
+                rotate(180)
+                edge(2);
+
+
+                // outer edge
+
+                translate([18*x + 22, stagger[x] + 17*2 + 2, 0])
+                rotate(180)
+                outer_corner();
+
+
+                translate([18*x + 22, stagger[x], 0])
+                rotate(90)
+                edge(17*2);
+
+                translate([18*x + 22, stagger[x] - 2, 0])
+                rotate(90)
+                outer_corner();
+
+                color("pink")
+                translate([18*x + 18, stagger[x] - 2, 0])
+                edge(2);
+
+
+                translate([18*x + 18, stagger[x], -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+                cube([2, 34, 5.2]);
+
+       
+            }else{
+              
+                if(stagger[x - 1] > stagger[x]){
+                    color("pink")
+                    translate([18*x + 18, stagger[x] + 17*3 + 2, 0])
+                    rotate(180)
+                    edge(14);
+
+                    translate([18*x + 4 , stagger[x] + 17*3 + 2, 0])
+                    rotate(180)
+                    inner_corner();
+                    
+
+                    translate([18*x , stagger[x] + 17*3, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+                    color("red")
+                    cube([2, stagger[x-1] - stagger[x], 5.2]);
+                    
+                    translate([18*x + 4, stagger[x] + 17*3 + 2, 0])
+                    rotate(90)
+                    edge(stagger[x-1] - stagger[x] - 2);
+
+                    translate([18*x + 4, stagger[x] + 17*3 + 2 + stagger[x-1] - stagger[x], 0])
+                    rotate(180)
+                    outer_corner();
+
+                    color("pink")
+                    translate([18*x + 2, stagger[x-1] + 17*3 + 2, 0])
+                    rotate(180)
+                    edge(2);
+
+
+                }
+                else if(stagger[x + 1] > stagger[x]){
+                    color("orange")
+                    translate([18*x + 16, stagger[x] + 17*3 + 2, 0])
+                    rotate(180)
+                    edge(16);
+                    
+
+                    translate([18*x + 16, stagger[x] + 17*3 + 2, 0])
+                    rotate(270)
+                    inner_corner();
+                    
+
+                    translate([18*x + 16, stagger[x-1] + 17*3 + 2 + stagger[x + 1] - stagger[x] , 0])
+                    rotate([0, 0, 270])
+                    edge(stagger[x + 1] - stagger[x]-2);
+                    
+
+                    translate([18*x + 16, stagger[x-1] + 17*3 + 2 + stagger[x + 1] - stagger[x] + 2, 0])
+                    rotate(270)
+                    outer_corner();
+                    
+                }else{
+                    color("indigo")
+                    translate([18*x + 18, stagger[x] + 17*3 + 2, 0])
+                    rotate(180)
+                    edge(18);
+
+                }
+            }  
         }
     }
     
@@ -93,10 +238,10 @@ module inner_corner(){
             }
         }
 
-        translate([0, 0, 2])
-        cube([2, 2, 1.2]);
+        translate([0, 0, 1])
+        cube([2, 2, 2.2]);
 
-        translate([0, 0, 2])
+        translate([0, 0, 1])
         rotate([0, 180, -90])
         union(){  
             translate([0, 0, 0])
@@ -129,18 +274,18 @@ module outer_corner(){
             cube([4, 4, 4]);
         }
 
-
+        color("blue")
         translate([0, 2, 3.2])
         rotate([90, 90, 0])
         intersection(){
-            cube([1.2, 2, 2]);
+            cube([2.2, 2, 2]);
             translate([0, 2, 0])
             rotate([0, 90, 0])
-            cylinder(h=1.3, r=2);
+            cylinder(h=2.3, r=2);
         }
 
 
-        translate([2, 2, 2])
+        translate([2, 2, 1])
         rotate([0, 180, 90])
         intersection(){
             sphere(r = 2);
@@ -162,10 +307,10 @@ module edge(length){
         }
 
 
-        translate([0, 0, 2])
-        cube([length, 2, 1.2]);
+        translate([0, 0, 1])
+        cube([length, 2, 2.2]);
 
-        translate([0, 2, 0])
+        translate([0, 2, -1])
         rotate([90, 0, 0])
         intersection(){
             cube([length, 2, 2]);
@@ -319,8 +464,7 @@ module key(){
 }
 
 
-translate([0, -2, 0])
-inner_corner();
+
 
 //module edge(length){
   //  difference(){
@@ -346,8 +490,52 @@ union(){
 
     translate([-28.1, -22.36, 0])
     rotate(42)
-        key();
+        union(){
+            key();
+            translate([-2, 0, -3.7])
+            rotate([180, 0, 90])
+            edge(17);
+        }
+        
+
+
 }
+
+
+// static code to finish frame for now:
+
+
+translate([18*4 - 28, stagger[4] - 2, 0])
+edge(28);
+
+
+
+
+color("orange")
+translate([18*4 - 31.6, stagger[4] - 2 - 5.48, 0])
+rotate(45)
+edge(10);
+
+translate([17, stagger[4] - 15.96, 0])
+rotate(20)
+edge(25);
+
+
+translate([4, stagger[4] - 25.7, 0])
+rotate(35)
+edge(18.4);
+
+
+
+translate([-8.79, stagger[4] - 37.3, 0])
+rotate(42)
+edge(17.9);
+
+
+translate([-8.79 - 1.44, stagger[4] - 37.3 - 1.35, 0])
+rotate(42)
+outer_corner();
+
 
 
 

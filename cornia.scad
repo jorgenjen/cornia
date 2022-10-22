@@ -478,106 +478,79 @@ module key(){
 //}
 
 
-thumbkey_angles = [25, 0, 0];
+thumbkey_angles = [20, 30, 45]; // must be in increasing value from left to right
 
 // new code for thumb cluster
 translate([0, 0, 0])
 //translate([18, -20.5, 0])
 union(){
+    
+    // THUMB KEY 0
+    // translate top right corner to origin
     translate([
             -(cos(atan(17/18) + thumbkey_angles[0]) * sqrt(17^2 + 18^2)),
             -(sin(atan(17/18) + thumbkey_angles[0]) * sqrt(17^2 + 18^2)), 
-            0])
+            0
+    ])
     rotate(thumbkey_angles[0])
     color("indigo")
         key();
     
+    
+    // THUMB KEY 1
+    // apply key 0 translate to make bottom right corner at same place as key 0 bottom left corner
+    translate([
+        -(cos(atan(17/18) + thumbkey_angles[0]) * sqrt(17^2 + 18^2)),
+        -(sin(atan(17/18) + thumbkey_angles[0]) * sqrt(17^2 + 18^2)), 
+        0
+    ])
+    // translate bottom right corner to origin
+    translate([
+        -(cos(thumbkey_angles[1]) * 18),
+        -(sin(thumbkey_angles[1]) * 18),
+        0
+    ])
     rotate(thumbkey_angles[1])
     color("orange")
     key();
         
-//    translate([-14.73, -10.32, 0])
-//    rotate(35)
-//        key();
-//
-//    translate([-28.1, -22.36, 0])
-//    rotate(42)
-//        union(){
-//            key();
-//            translate([-2, 0, -3.7])
-//            rotate([180, 0, 90])
-//            edge(17);
-//        }
         
-
-
+    // THUMB KEY 2
+    
+    // apply key 0 translate 
+    translate([
+        -(cos(atan(17/18) + thumbkey_angles[0]) * sqrt(17^2 + 18^2)),
+        -(sin(atan(17/18) + thumbkey_angles[0]) * sqrt(17^2 + 18^2)), 
+        0
+    ])
+    // apply key 1 translate
+    translate([
+        -(cos(thumbkey_angles[1]) * 18),
+        -(sin(thumbkey_angles[1]) * 18),
+        0
+    ])
+    // move bottom right corner to origin
+    translate([
+        -(cos(thumbkey_angles[2]) * 18),
+        -(sin(thumbkey_angles[2]) * 18),
+        0
+    ])
+    rotate(thumbkey_angles[2])
+    color("aqua")
+    key();
+    
 }
 
 
-// static code to finish frame for now:
 
-//
-//translate([18*4 - 26.9, stagger[4] - 2, 0])
-//edge(26.9);
-//
-//
-//
-//
-//color("orange")
-//translate([18*4 - 31.6, stagger[4] - 2 - 5.48, 0])
-//rotate(45)
-//edge(10);
-//
-//translate([17, stagger[4] - 15.96, 0])
-//rotate(20)
-//edge(25);
-//
-//
-//translate([4, stagger[4] - 25.7, 0])
-//rotate(35)
-//edge(18.4);
-//
-//
-//
-//translate([-8.79, stagger[4] - 37.3, 0])
-//rotate(42)
-//edge(17.9);
-//
-//
-//translate([-8.79 - 1.44, stagger[4] - 37.3 - 1.35, 0])
-//rotate(42)
-//outer_corner();
-//
-//color("pink")
-//translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
-//linear_extrude(5.2)
-//polygon([
-//    [18*4, stagger[3]],
-//    [18*4, stagger[4]],
-//    [18*4 - 26.9, stagger[4]],
-//    [18*4 - 32.65, stagger[4] - 5.7],
-//    [18*2 - 1.25, stagger[4] - 7.4],
-//    [28.9, 2],
-//    [36, 2],
-//    [36, 8],
-//    [54, 8],
-//    [54, 2],
-//    [18*4, stagger[3]]
-//]);
-//
-//color("blue")
-//translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack + 1])
-//linear_extrude(5.2)
-//polygon([
-//    [28.9, 2],
-//    [18, 2],
-//    [18, 0],
-//    [0, 0],
-//    [0, -12.35],
-//    [8.3, -6.61],
-//    [17.5, -20.5],
-//    [10.4, -6.5],
-//]);
+
+
+
+
+
+
+
+
 
 
 

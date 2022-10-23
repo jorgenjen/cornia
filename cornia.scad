@@ -568,45 +568,7 @@ union(){
     rotate(thumbkey_angles[2])
     color("aqua")
     key();
-    
-    
-    // Fills in gap between keys in thumbcluster
-//    linear_extrude(2.2, center = false){
-//                    polygon(points=[
-//                        [
-//                            -(cos(atan(17/18) + thumbkey_angles[0]) * sqrt(17^2 + 18^2)),
-//                            -(sin(atan(17/18) + thumbkey_angles[0]) * sqrt(17^2 + 18^2))
-//                        ],
-//                        [
-//                            -(cos(thumbkey_angles[0]) * 18), 
-//                            -(sin(thumbkey_angles[0]) * 18)
-//                        ],
-//                        [-22, 0]
-//                    ]);
-//                } 
-
-
-//     translate([
-//            -(cos(atan(17/18) + thumbkey_angles[0]) * sqrt(17^2 + 18^2)),
-//            -(sin(atan(17/18) + thumbkey_angles[0]) * sqrt(17^2 + 18^2)), 
-//            0
-//    ])
-    
-
-                 
-    
 }
-
-
-echo((sin(thumbkey_angles[0]) * 17)/sin((180 - thumbkey_angles[0])/2));
-//echo((sin(thumbkey_angles[0]) * 17)/sin((180 - thumbkey_angles[0])/2));
-
-echo(cos((180 - (thumbkey_angles[1] - thumbkey_angles[0]))/2) * (sin(thumbkey_angles[0]) * 17)/sin((180 - (thumbkey_angles[1] - thumbkey_angles[0]))/2));
-echo(sin((180 - (thumbkey_angles[1] - thumbkey_angles[0]))/2) * (sin(thumbkey_angles[0]) * 17)/sin((180 - (thumbkey_angles[1] - thumbkey_angles[0]))/2));
-//(sin(a) * b)/sin(b) = a
-
-
-echo((thumbkey_angles[1] - thumbkey_angles[0]));
 
 
 

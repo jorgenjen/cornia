@@ -478,7 +478,7 @@ module key(){
 //}
 
 
-thumbkey_angles = [20, 30, 45]; // must be in increasing value from left to right
+thumbkey_angles = [25, 35, 45]; // must be in increasing order from left to right
 
 // new code for thumb cluster
 translate([0, 0, 0])
@@ -493,8 +493,23 @@ union(){
             0
     ])
     rotate(thumbkey_angles[0])
-    color("indigo")
+    
+    union(){
+        color("indigo")
         key();
+        // Fils gap between key 0 and 1
+        color("marine")
+        translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+        linear_extrude(5.2)
+                        polygon(points=[
+                            [0, 0],
+                            [0, 17],
+                            [
+                            -sin((180 - (thumbkey_angles[1] - thumbkey_angles[0]))/2) * (sin((thumbkey_angles[1] - thumbkey_angles[0])) * 17)/sin((180 - (thumbkey_angles[1] - thumbkey_angles[0]))/2), 
+                            17 - cos((180 - (thumbkey_angles[1] - thumbkey_angles[0]))/2) * (sin((thumbkey_angles[1] - thumbkey_angles[0])) * 17)/sin((180 - (thumbkey_angles[1] - thumbkey_angles[0]))/2)
+                            ]
+                        ]);
+    }
     
     
     // THUMB KEY 1
@@ -511,8 +526,23 @@ union(){
         0
     ])
     rotate(thumbkey_angles[1])
-    color("orange")
-    key();
+   
+    union(){
+        color("orange")
+        key();
+        // Fils gap between key 1 and 2
+        color("marine")
+        translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+        linear_extrude(5.2)
+                        polygon(points=[
+                            [0, 0],
+                            [0, 17],
+                            [
+                            -sin((180 - (thumbkey_angles[2] - thumbkey_angles[1]))/2) * (sin((thumbkey_angles[2] - thumbkey_angles[1])) * 17)/sin((180 - (thumbkey_angles[2] - thumbkey_angles[1]))/2), 
+                            17 - cos((180 - (thumbkey_angles[2] - thumbkey_angles[1]))/2) * (sin((thumbkey_angles[2] - thumbkey_angles[1])) * 17)/sin((180 - (thumbkey_angles[2] - thumbkey_angles[1]))/2)
+                            ]
+                        ]);
+    }
         
         
     // THUMB KEY 2
@@ -539,8 +569,44 @@ union(){
     color("aqua")
     key();
     
+    
+    // Fills in gap between keys in thumbcluster
+//    linear_extrude(2.2, center = false){
+//                    polygon(points=[
+//                        [
+//                            -(cos(atan(17/18) + thumbkey_angles[0]) * sqrt(17^2 + 18^2)),
+//                            -(sin(atan(17/18) + thumbkey_angles[0]) * sqrt(17^2 + 18^2))
+//                        ],
+//                        [
+//                            -(cos(thumbkey_angles[0]) * 18), 
+//                            -(sin(thumbkey_angles[0]) * 18)
+//                        ],
+//                        [-22, 0]
+//                    ]);
+//                } 
+
+
+//     translate([
+//            -(cos(atan(17/18) + thumbkey_angles[0]) * sqrt(17^2 + 18^2)),
+//            -(sin(atan(17/18) + thumbkey_angles[0]) * sqrt(17^2 + 18^2)), 
+//            0
+//    ])
+    
+
+                 
+    
 }
 
+
+echo((sin(thumbkey_angles[0]) * 17)/sin((180 - thumbkey_angles[0])/2));
+//echo((sin(thumbkey_angles[0]) * 17)/sin((180 - thumbkey_angles[0])/2));
+
+echo(cos((180 - (thumbkey_angles[1] - thumbkey_angles[0]))/2) * (sin(thumbkey_angles[0]) * 17)/sin((180 - (thumbkey_angles[1] - thumbkey_angles[0]))/2));
+echo(sin((180 - (thumbkey_angles[1] - thumbkey_angles[0]))/2) * (sin(thumbkey_angles[0]) * 17)/sin((180 - (thumbkey_angles[1] - thumbkey_angles[0]))/2));
+//(sin(a) * b)/sin(b) = a
+
+
+echo((thumbkey_angles[1] - thumbkey_angles[0]));
 
 
 

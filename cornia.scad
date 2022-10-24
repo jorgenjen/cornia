@@ -498,7 +498,7 @@ union(){
         color("indigo")
         key();
         // Fils gap between key 0 and 1
-        color("marine")
+        color("aqua")
         translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
         linear_extrude(5.2)
                         polygon(points=[
@@ -509,6 +509,8 @@ union(){
                             17 - cos((180 - (thumbkey_angles[1] - thumbkey_angles[0]))/2) * (sin((thumbkey_angles[1] - thumbkey_angles[0])) * 17)/sin((180 - (thumbkey_angles[1] - thumbkey_angles[0]))/2)
                             ]
                         ]);
+        translate([0, -2, 0])
+        edge(18);
     }
     
     
@@ -531,7 +533,7 @@ union(){
         color("orange")
         key();
         // Fils gap between key 1 and 2
-        color("marine")
+        color("aqua")
         translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
         linear_extrude(5.2)
                         polygon(points=[
@@ -542,6 +544,8 @@ union(){
                             17 - cos((180 - (thumbkey_angles[2] - thumbkey_angles[1]))/2) * (sin((thumbkey_angles[2] - thumbkey_angles[1])) * 17)/sin((180 - (thumbkey_angles[2] - thumbkey_angles[1]))/2)
                             ]
                         ]);
+        translate([0, -2, 0])
+        edge(18);
     }
         
         
@@ -566,9 +570,26 @@ union(){
         0
     ])
     rotate(thumbkey_angles[2])
-    color("aqua")
-    key();
+    union(){
+        color("pink")
+        key();
+        
+        translate([0, -2, 0])
+        edge(18);
+        
+        translate([-2, -2, 0])
+        outer_corner();
+        
+        translate([-2, 17, 0])
+        rotate(270)
+        edge(17);
+        
+        translate([-2, 19, 0])
+        rotate(270)
+        outer_corner();
+    }
 }
+
 
 
 

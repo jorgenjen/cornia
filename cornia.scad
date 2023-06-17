@@ -22,17 +22,18 @@ sides_radius_slack = 0.25;
 lane_width = 1.6;
 move_fraction = 2.85;
 
-
-stagger = [0, 2, 8, 2, -7, -7]; // max difference between neigbour columns is 9mm 
+columns = 5; // zero indexed so 5 for 6 and 4 for 5 // colums is len(stagger) but it did not work for some reason so update accordingly
+two_key_last_column = true; // might use for setting last row to be with or without key
+stagger = [0, 2, 8, 2, -7, -9]; // max difference between neigbour columns is 9mm 
 
    
 
-//mirror() use mirror to get left hand
+//mirror() // use mirror to get left hand (besides thumb cluster)
 difference(){
     union(){
-        for(x = [0:5]){
+        for(x = [0:columns]){
             for(y = [0:2]){
-                if(!(x == 5 && y == 2)){ // to get two on last pinky column
+                if(!(x == columns && y == 2 && two_key_last_column)){ // to get two on last pinky column
                 
                     translate([18*x, y*17 + stagger[x], 0])
                     key();                  
@@ -40,147 +41,196 @@ difference(){
                 }
             }
 
+            // adds edge to the bottom of the pinky row
             if(x > 3){
                 translate([18*x, stagger[x] - 2, 0])
                 edge(18);
             }
             
-            if(x == 0){
-                translate([18*x + 16, stagger[x] + 17*3 + 2, 0])
+            // edge that covers middle of each key
+            if (x == columns && two_key_last_column){
+                // only needed if you have only two keys for last pinky row
+                translate([18*x + 16, stagger[x] + 17*2 + 2])
                 rotate(180)
-                edge(16);
+                edge(14); 
+            } else{
+                translate([18*x + 16, stagger[x] + 17*3 + 2])
+                rotate(180)
+                edge(14);    
+            }
+           
 
-                translate([18*x + 16, stagger[x] + 17*3 + 2, 0])
-                rotate(270)
-                inner_corner();
-                
-                // buggy from here 
-                //translate([18*x + 16, 17*3 + 3, 1])
-                //rotate([0, 0, 270])
-                //edge(stagger[x + 1] - stagger[x] - 2);
-                
+            // ###### LEFT BRIDGE ALONG TOP BORDER ######
+            if (x != 0){
+                if (stagger[x] == stagger[x - 1]){
+                    // case where previous column and current column were the same
+                    if (x == columns && two_key_last_column){
+                        translate([18*x, stagger[x] + 17*2, 0])
+                        translate([2, 2, 0]) // translate to origin
+                        rotate(180)
+                        inner_corner();
 
-                translate([18*x + 16, + 17*3 + 4, 0])
-                rotate(270)
-                outer_corner();
+                        // need to add wall here aswell as it's only two keys for last column so a big stretch between
 
-                // to here 
+                        // connecting wall shows only if stagger is more than 2mm
+                        translate([18*x, stagger[x] + 17*2 + 2, 0])
+                        translate([2, 0, 0])
+                        rotate(90)
+                        edge(15);
+                    }
+                    else{
+                        translate([18*x, stagger[x] + 17*3, 0])
+                        translate([2, 2, 0]) // translate to origin
+                        rotate(180)
+                        edge(2);
+
+                    }
+                }
+                else if (stagger[x] < stagger[x-1]){
+                    // case where current column where lower than the previous column
+                    
+                    if (x == columns && two_key_last_column){
+                        // case when two key on last column
+                        translate([18*x, stagger[x] + 17*2, 0])
+                        translate([2, 2, 0]) // translate to origin
+                        rotate(180)
+                        inner_corner();
+
+                        translate([18*x, stagger[x] + 17*2 + 2, 0])
+                        translate([2, 0, 0])
+                        rotate(90)
+                        edge(stagger[x - 1] - stagger[x] - 2 + 17);
+                    }
+                    else{
+                        // normal case 
+                        translate([18*x, stagger[x] + 17*3, 0])
+                        translate([2, 2, 0]) // translate to origin
+                        rotate(180)
+                        inner_corner();
+
+
+                        // connecting wall shows only if stagger is more than 2mm
+                        translate([18*x, stagger[x] + 17*3 + 2, 0])
+                            translate([2, 0, 0])
+                            rotate(90)
+                            edge(stagger[x - 1] - stagger[x] - 2);
+                    }
+
+
+                }
+                else {
+                    // case where previous column was lower than the current column
+                    translate([18*x - 2, stagger[x] + 17*3, 0])
+                    translate([0, 2, 0]) // translate to origin
+                    rotate(-90)
+                    outer_corner();
+
+                    translate([18*x, stagger[x] + 17*3, 0])
+                    translate([2, 2, 0]) // translate to origin
+                    rotate(180)
+                    edge(2);
+                    
+                }
+
 
             }
-            else if(x == 5){
-                color("pink")
-                translate([18*x + 18 + 2, stagger[x] + 17*2 + 2, 0])
-                rotate(180)
-                edge(16);
+            
+            // ###### RIGHT BRIDGE ALONG TOP BORDER ######
+            if (x != 5){
+                if (stagger[x] == stagger[x + 1]){
+                    if (x == columns - 1 && two_key_last_column){
+                        translate([18*x + 16 + 2, stagger[x] + 17*3, 0])
+                        translate([2, 2, 0]) // translate to origin
+                        rotate(180)
+                        outer_corner();
 
-                translate([18*x + 4 , stagger[x] + 17*2 + 2, 0])
-                rotate(180)
-                inner_corner();
-                
+                        translate([18*x + 16, stagger[x] + 17*3, 0])
+                        translate([2, 2, 0]) // translate to origin
+                        rotate(180)
+                        edge(2);
+                    }
+                    else{
+                        translate([18*x + 16, stagger[x] + 17*3, 0])
+                        translate([2, 2, 0]) // translate to origin
+                        rotate(180)
+                        edge(2);
 
-                translate([18*x , stagger[x] + 17*2, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
-                color("red")
-                cube([2, stagger[x-1] - stagger[x] + 17, 5.2]);
-                
-                translate([18*x + 4, stagger[x] + 17*2 + 2, 0])
-                rotate(90)
-                edge(stagger[x-1] - stagger[x] - 2 + 17);
+                    }
 
-                translate([18*x + 4, stagger[x] + 17*2 + 2 + stagger[x-1] - stagger[x] + 17, 0])
-                rotate(180)
-                outer_corner();
-
-                color("pink")
-                translate([18*x + 2, stagger[x-1] + 17*3 + 2, 0])
-                rotate(180)
-                edge(2);
-
-
-                // outer edge
-
-                translate([18*x + 22, stagger[x] + 17*2 + 2, 0])
-                rotate(180)
-                outer_corner();
-
-
-                translate([18*x + 22, stagger[x], 0])
-                rotate(90)
-                edge(17*2);
-
-                translate([18*x + 22, stagger[x] - 2, 0])
-                rotate(90)
-                outer_corner();
-
-                color("pink")
-                translate([18*x + 18, stagger[x] - 2, 0])
-                edge(2);
-
-
-                translate([18*x + 18, stagger[x], -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
-                cube([2, 34, 5.2]);
-
-       
-            }else{
-              
-                if(stagger[x - 1] > stagger[x]){
-                    color("pink")
-                    translate([18*x + 18, stagger[x] + 17*3 + 2, 0])
-                    rotate(180)
-                    edge(14);
-
-                    translate([18*x + 4 , stagger[x] + 17*3 + 2, 0])
-                    rotate(180)
+                }
+                if (stagger[x] < stagger[x + 1]){
+                    // current is lower than next
+                    translate([18*x + 16, stagger[x] + 17*3, 0])
+                    translate([0, 2, 0]) // translate to origin
+                    rotate(-90)
                     inner_corner();
-                    
 
-                    translate([18*x , stagger[x] + 17*3, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
-                    color("red")
-                    cube([2, stagger[x-1] - stagger[x], 5.2]);
-                    
-                    translate([18*x + 4, stagger[x] + 17*3 + 2, 0])
-                    rotate(90)
-                    edge(stagger[x-1] - stagger[x] - 2);
+                    // connecting wall when stagger is greater than 2mm 
+                    // in cases where outer edge points to the left
+                    translate([18*x + 16, stagger[x] + 17*3 + 2, 0])
+                    translate([0, stagger[x+1] - stagger[x] - 2, 0]) // move to origin
+                    rotate(-90)
+                    edge(stagger[x+1] - stagger[x] - 2);
 
-                    translate([18*x + 4, stagger[x] + 17*3 + 2 + stagger[x-1] - stagger[x], 0])
+                }
+                if (stagger[x] > stagger[x + 1]){
+                    translate([18*x + 16 + 2, stagger[x] + 17*3, 0])
+                    translate([2, 2, 0]) // translate to origin
                     rotate(180)
                     outer_corner();
 
-                    color("pink")
-                    translate([18*x + 2, stagger[x-1] + 17*3 + 2, 0])
+                    translate([18*x + 16, stagger[x] + 17*3, 0])
+                    translate([2, 2, 0]) // translate to origin
                     rotate(180)
                     edge(2);
 
-
                 }
-                else if(stagger[x + 1] > stagger[x]){
-                    color("orange")
-                    translate([18*x + 16, stagger[x] + 17*3 + 2, 0])
-                    rotate(180)
-                    edge(16);
-                    
+            }
 
-                    translate([18*x + 16, stagger[x] + 17*3 + 2, 0])
-                    rotate(270)
-                    inner_corner();
-                    
 
-                    translate([18*x + 16, stagger[x-1] + 17*3 + 2 + stagger[x + 1] - stagger[x] , 0])
-                    rotate([0, 0, 270])
-                    edge(stagger[x + 1] - stagger[x]-2);
-                    
+            // ###### END BORDER AND PADDING TO THE RIGHT ######
+            side_padding = 2.1; // for easy prototyping
+            if (x == columns){
+                key_count = (two_key_last_column) ? 2 : 3; // turnary operator - variables can't be changed in if in openSCAD 
 
-                    translate([18*x + 16, stagger[x-1] + 17*3 + 2 + stagger[x + 1] - stagger[x] + 2, 0])
-                    rotate(270)
-                    outer_corner();
-                    
-                }else{
-                    color("indigo")
-                    translate([18*x + 18, stagger[x] + 17*3 + 2, 0])
-                    rotate(180)
-                    edge(18);
 
-                }
-            }  
+                // padded cube
+                translate([18*(x+1), stagger[x], 0])
+                translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+                color("indigo")
+                cube([side_padding, 17*key_count, 5.2]);
+
+                // top border along padded cube
+                translate([18*x + 16, stagger[x] + 17*key_count, 0])
+                translate([2 + side_padding, 2, 0]) // translate to origin
+                rotate(180)
+                edge(2 + side_padding);
+                
+                // upper outer corner
+                translate([18*(x+1) + side_padding, stagger[x] + 17*key_count, 0])
+                translate([2, 2, 0])
+                rotate(180)
+                outer_corner();
+
+                // long side edge
+                translate([18*(x+1) + side_padding, stagger[x], 0])
+                translate([2, 0, 0]) // translate to oriting
+                rotate(90)
+                edge(17*key_count);
+
+                // bottom outer corner
+                translate([18*(x+1) + side_padding, stagger[x] - 2, 0])
+                translate([2, 0, 0])
+                rotate(90)
+                outer_corner();
+
+                // bottom boorder along padded cube
+                translate([18*x + 16, stagger[x] - 2, 0])
+                translate([2, 0, 0]) // translate to origin
+                edge(side_padding);
+
+                         
+            }
         }
     }
     
@@ -295,6 +345,7 @@ module outer_corner(){
 }  
   
 
+// side: 0 = top; 1 = right; 2 = bottom; 3 = left; // part of future update to readability and maintainability of code
 module edge(length){
     translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
     union(){
@@ -481,8 +532,8 @@ module key(){
 thumbkey_angles = [25, 35, 45]; // must be in increasing order from left to right
 
 // new code for thumb cluster
-translate([0, 0, 0])
-//translate([18, -20.5, 0])
+//translate([22, 1.5, 0])
+translate([18, -20.5, 0])
 union(){
     
     // THUMB KEY 0
@@ -510,7 +561,7 @@ union(){
                             ]
                         ]);
         translate([0, -2, 0])
-        edge(18);
+        edge(40);
     }
     
     

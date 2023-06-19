@@ -24,7 +24,7 @@ move_fraction = 2.85;
 
 columns = 5; // zero indexed so 5 for 6 and 4 for 5 // colums is len(stagger) but it did not work for some reason so update accordingly
 two_key_last_column = true; // might use for setting last row to be with or without key
-stagger = [0, 2, 8, 2, -7, -9]; // max difference between neigbour columns is 9mm 
+stagger = [0, 2, 8, 2, -7, -7]; // max difference between neigbour columns is 9mm 
 
    
 // side_padding decides the padding between the rounded border and the key on the right as each key module is shifted towards the left
@@ -33,6 +33,80 @@ side_padding = 2.1; // for easy prototyping // should mby be 2.1 FYI (this is fo
 //mirror() // use mirror to get left hand (besides thumb cluster)
 difference(){
     union(){
+        
+        // BOTTOM BORDER OF PINKY ROWS
+        if (columns == 5){
+            if (stagger[4] > stagger[5]){
+                // last pinky column is lower than the first (normal configuration)
+                translate([18*4 + 16, stagger[4] - 2, 0])
+                inner_corner();
+
+                translate([18*4, stagger[4] - 2, 0])
+                edge(16);
+
+                // connecting wall:
+                translate([18*(4) + 16, stagger[4] - 4, 0])
+                translate([0, 2, 0])
+                rotate(270)
+                edge(stagger[4] - stagger[5] - 2);
+                
+                // Last column border:
+                translate([18*5, stagger[5] - 2, 0])
+                edge(18);
+
+                translate([18*5 - 2, stagger[5] - 2, 0])
+                outer_corner();
+            }
+            else if (stagger[4] < stagger[5]){
+                // last pinky is higher up than first pinky column (strange unusual configuration)
+                translate([18*4 + 18 + side_padding, stagger[4] - 2, 0])
+                translate([2, 0, 0])
+                rotate(90)
+                outer_corner();
+
+                translate([18*4, stagger[4] - 2, 0])
+                edge(18 + side_padding);
+
+                // padding to make center key:
+                translate([18*(4) + 18, stagger[4], 0])
+                translate([0, 0, -3.001 - hotswap_height_slack - 0.9 - plate_depth_slack])
+                color("indigo")
+                cube([side_padding, stagger[5] - stagger[4], 5.2]);
+
+                // connecting wall:
+                translate([18*(4) + 18 + side_padding, stagger[4], 0])
+                translate([2, 0, 0])
+                rotate(90)
+                edge(stagger[5] - stagger[4] - 2);
+
+                // Last column border:
+                translate([18*5 + 2 + side_padding, stagger[5] - 2, 0])
+                edge(14);
+
+                translate([18*5 + side_padding, stagger[5] - 2, 0])
+                translate([2, 0, 0])
+                rotate(90)
+                inner_corner();
+
+
+            }
+            else{
+                // the last two have the same stagger (Fairly normal configuration)
+                translate([18*4, stagger[4] - 2, 0])
+                edge(18);
+
+                translate([18*5, stagger[5] - 2, 0])
+                edge(18);
+            }
+        }
+        else{
+            // only 5 columns (zero indexed)
+            translate([18*4, stagger[4] - 2, 0])
+            edge(18);
+        }
+
+
+        // LOOP FOR PLACING THE KEYS AND OUTER BORDER         
         for(x = [0:columns]){
             for(y = [0:2]){
                 if(!(x == columns && y == 2 && two_key_last_column)){ // to get two on last pinky column
@@ -42,10 +116,14 @@ difference(){
             }
 
             // adds edge to the bottom of the pinky row
-            if(x > 3){
-                translate([18*x, stagger[x] - 2, 0])
-                edge(18);
-            }
+//            if(x > 3){
+  //              translate([18*x, stagger[x] - 2, 0])
+    //            edge(18);
+      //      }
+
+            
+
+
             
             // ###### LEFT BRIDGE ALONG TOP BORDER ######
             if (x != 0){

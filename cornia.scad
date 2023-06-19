@@ -29,7 +29,7 @@ two_key_last_column = true; // might use for setting last row to be with or with
     // max difference between neigbour columns is 9mm for wire lanes to work 
     // minimum difference between neigbouring columns is 2mm if it's less than 2mm the border does not line up correctly
         // can fixed by removing inner_corner and just make the edges overlap (MIGHT DO LATER)
-stagger = [0, 2, 8, 2, -7, -9]; 
+stagger = [0, 2, 8, 2, -17, -9]; 
 
    
 // side_padding decides the padding between the rounded border and the key on the right as each key module is shifted towards the left
@@ -678,26 +678,12 @@ module key(){
 }
 
 
-
-
-//module edge(length){
-  //  difference(){
-    //    cube([length, 2, 5.2]);
-      //  translate([-0.01, -1.415, 4.612])
-        //
-//        rotate([-45, 0, 0])
-//        color("black")
-//        cube([length + 0.02, 2, 3]);
-//    }
-//}
-
 // ###########################
 // ###### THUMB CLUSTER ######
 // ###########################
 
 thumbkey_angles = [15, 25, 40]; // must be in increasing order from left to right
 
-// new code for thumb cluster
 thumb_translate = [25, 1.8, 0]; // location of the thumb cluster 
 translate(thumb_translate) 
 //translate([0, 0, 0])
@@ -731,7 +717,7 @@ union(){
                             ]
                         ]);
         translate([0, -2, 0])
-        edge(40);
+        edge(18);
     }
     
     
@@ -817,12 +803,52 @@ union(){
 
 
 
+// ###########################################################
+// ###### fill and border combine thumbcluster and main ######
+// ###########################################################
+
+overlap_length = 0;
+calc_angle = atan(abs((-(cos(thumbkey_angles[0]) * 19) + thumb_translate[1]) - (stagger[4] - 2)) /
+            abs((sin(thumbkey_angles[0]) * 19 + thumb_translate[0]) - 18*4));
+
+angle = ((stagger[4] - 2) < -(cos(thumbkey_angles[0]) * 19) + thumb_translate[1]) ? -calc_angle : calc_angle;
+echo("blue loc: ", (stagger[4] - 2));
+//echo("Pink loc: ", sin(thumbkey_angles[0]) * 19 + thumb_translate[0]);
+echo("Pink loc: ", -(cos(thumbkey_angles[0]) * 19) + thumb_translate[1]);
+echo(angle)
+echo(calc_angle)
+//translate(sin(thumbkey_angles[0]) * 17, cos(thumbkey_angles[0]) * 17, 0)
+translate([sin(thumbkey_angles[0]) * 19 - overlap_length, -(cos(thumbkey_angles[0]) * 19), 0])
+translate(thumb_translate) 
+//rotate(90 - atan(abs((sin(thumbkey_angles[0]) * 19 + thumb_translate[0]) - 18*4)/
+  //                  abs((-(cos(thumbkey_angles[0]) * 19) + thumb_translate[1]) - (stagger[4] - 2))))
+rotate(angle)
+edge(sqrt(((sin(thumbkey_angles[0]) * 19 + thumb_translate[0]) - 18*4)^2 + 
+          ((-(cos(thumbkey_angles[0]) * 19) + thumb_translate[1]) - (stagger[4] - 2))^2)
+    + overlap_length
+);
 
 
+//translate([sin(thumbkey_angles[0]) * 19 + thumb_translate[0], -(cos(thumbkey_angles[0]) * 19) + thumb_translate[1], 0])
+//color("pink")
+//cube([2, 2, 2]);
+
+//translate([18*4, stagger[4] - 2, 0])
+//translate([0, 0, 1])
+//color("blue")
+//cube([2, 2, 2]);
 
 
+echo("Lenght: ", sqrt(((sin(thumbkey_angles[0]) * 19 + thumb_translate[0]) - 18*4)^2 + 
+                 ((-(cos(thumbkey_angles[0]) * 19) + thumb_translate[1]) - (stagger[4] - 2))^2));
+
+echo("Angle: ", atan(abs((sin(thumbkey_angles[0]) * 19 + thumb_translate[0]) - 18*4)/
+                    abs((-(cos(thumbkey_angles[0]) * 19) + thumb_translate[1]) - (stagger[4] - 2))) );
 
 
+echo("Angle other way around: ", atan(
+                    abs((-(cos(thumbkey_angles[0]) * 19) + thumb_translate[1]) - (stagger[4] - 2)) /
+                    abs((sin(thumbkey_angles[0]) * 19 + thumb_translate[0]) - 18*4)) );
 
 
 

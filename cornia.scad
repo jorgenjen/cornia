@@ -24,7 +24,12 @@ move_fraction = 2.85;
 
 columns = 5; // zero indexed so 5 for 6 and 4 for 5 // colums is len(stagger) but it did not work for some reason so update accordingly
 two_key_last_column = true; // might use for setting last row to be with or without key
-stagger = [0, 2, 8, 2, -7, -9]; // max difference between neigbour columns is 9mm 
+
+// Stagger configuration list:
+    // max difference between neigbour columns is 9mm for wire lanes to work 
+    // minimum difference between neigbouring columns is 2mm if it's less than 2mm the border does not line up correctly
+        // can fixed by removing inner_corner and just make the edges overlap (MIGHT DO LATER)
+stagger = [0, 2, 8, 2, -7, -9]; 
 
    
 // side_padding decides the padding between the rounded border and the key on the right as each key module is shifted towards the left
@@ -686,12 +691,17 @@ module key(){
 //    }
 //}
 
+// ###########################
+// ###### THUMB CLUSTER ######
+// ###########################
 
-thumbkey_angles = [25, 35, 45]; // must be in increasing order from left to right
+thumbkey_angles = [15, 25, 40]; // must be in increasing order from left to right
 
 // new code for thumb cluster
-//translate([22, 1.5, 0])
-translate([18, -20.5, 0])
+thumb_translate = [25, 1.8, 0]; // location of the thumb cluster 
+translate(thumb_translate) 
+//translate([0, 0, 0])
+//translate([18, -20.5, 0])
 union(){
     
     // THUMB KEY 0
@@ -705,6 +715,8 @@ union(){
     
     union(){
         color("indigo")
+        translate([18, 17, 0]) // translate to origin after rotate of switch for easy wire routing
+        rotate(180)
         key();
         // Fils gap between key 0 and 1
         color("aqua")
@@ -740,6 +752,8 @@ union(){
    
     union(){
         color("orange")
+        translate([18, 17, 0]) // translate to origin after rotate of switch for easy wire routing
+        rotate(180)
         key();
         // Fils gap between key 1 and 2
         color("aqua")
@@ -781,6 +795,8 @@ union(){
     rotate(thumbkey_angles[2])
     union(){
         color("pink")
+        translate([18, 17, 0]) // translate to origin after rotate of switch for easy wire routing
+        rotate(180)
         key();
         
         translate([0, -2, 0])

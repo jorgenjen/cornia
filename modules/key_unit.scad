@@ -32,6 +32,7 @@ module key(
 
     
     // move the key up along z-axis so the bottom of the key is at z == 0
+    // This is the translattion that bottom_row accounts for
     translate_by = rotation_x < 0 ? vec_rotated_xz(0, 17, 0, rotation_x, rotation_z, false): [0, 0, 0];
 
     translate([0, 0, -translate_by[2]])
@@ -149,9 +150,9 @@ key();
     
 
 // bottom_row means that the key has been translated up along z-axis to make the lowest point z=0
-// so to get correct point location that translation must be accounted for hence the flag
+// so to get correct point location that translation must be accounted for hence the flago
+//      this is the case when rotatiion_x < 0 but can't use that in logic as this function is used to compute the transltion
 function vec_rotated_xz(x, y, z, rotation_x, rotation_z, bottom_row) =
-    // let translated_by = bottom_row ? vec_rotated_xz(0, 17, 0, rotation_x, rotation_z, false): [0, 0, 0];
     bottom_row ?
         [
             x*cos(rotation_z) - y*sin(rotation_z)*cos(rotation_x) + z*sin(rotation_z)*sin(rotation_x),

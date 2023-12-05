@@ -1,5 +1,10 @@
 $fn = 32; // set the resolution of the model (Low during developmet for fast renders)
 
+// ===================================IMPORTANT_NOTE======================================
+// use use instaead of include such that the demo does not show in the file you call it in
+// =======================================================================================
+
+// local variables only used for demo of module and functions in this file
 local_rotation_x = -20;
 local_rotation_z = -5;
 local_bottom_row = true;
@@ -186,7 +191,7 @@ translate(vec_rotated_xz(18, 0, 0, local_rotation_x, local_rotation_z, local_bot
     cube([1, 1, 1]);
 
 
-// demo of front corners so foacing user on switch side
+// demo of front corners so facing user on switch side
 
 // top left front corner
 color("black")

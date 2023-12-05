@@ -1,7 +1,8 @@
 $fn = 32; // set the resolution of the model (Low during developmet for fast renders)
 
-local_rotation_x = 30;
-local_rotation_z = 25;
+local_rotation_x = -20;
+local_rotation_z = -5;
+local_bottom_row = true;
 
 // Naming explained:
 // Slack means how much larger a part of the model is in comparison to the schematics
@@ -24,6 +25,11 @@ module key(
         rotation_z = local_rotation_z,  // rotation of the yz plane so normal 2D rotation around x-axis (e.g, for creating key wells)
         ){
 
+    
+    // move the key up along z-axis so the bottom of the key is at z == 0
+    translate_by = rotation_x < 0 ? vec_rotated_xz(0, 17, 0, rotation_x, rotation_z, false): [0, 0, 0];
+
+    translate([0, 0, -translate_by[2]])
     color("pink") // Set to one to make it look like one (uncomment for development of module)
     rotate([rotation_x, 0, rotation_z])
     translate([0, 0, 0.9 + plate_depth_slack + 3]) // move the bottom to z == 0
@@ -131,36 +137,52 @@ module key(
 
 key();
 
-// #####################################################################
-// ########### Function to compute corner vectors/locations ############
-// #####################################################################
 
-function vec_rotated_xz(x, y, z, rotation_x, rotation_z) =
-    [x*cos(rotation_z) - y*sin(rotation_z)*cos(rotation_x) + z*sin(rotation_z)*sin(rotation_x),
-     x*sin(rotation_z) + y*cos(rotation_z)*cos(rotation_x) - z*cos(rotation_z)*sin(rotation_x),
-     y*sin(rotation_x) + z*cos(rotation_x)];
+// ====================================================================
+//                          Helper functions 
+// ====================================================================
     
 
-// demo of back cornes so on the hotswap side down towards the table
+// bottom_row means that the key has been translated up along z-axis to make the lowest point z=0
+// so to get correct point location that translation must be accounted for hence the flag
+function vec_rotated_xz(x, y, z, rotation_x, rotation_z, bottom_row) =
+    // let translated_by = bottom_row ? vec_rotated_xz(0, 17, 0, rotation_x, rotation_z, false): [0, 0, 0];
+    bottom_row ?
+        [
+            x*cos(rotation_z) - y*sin(rotation_z)*cos(rotation_x) + z*sin(rotation_z)*sin(rotation_x),
+            x*sin(rotation_z) + y*cos(rotation_z)*cos(rotation_x) - z*cos(rotation_z)*sin(rotation_x),
+            y*sin(rotation_x) + z*cos(rotation_x) - vec_rotated_xz(0, 17, 0, rotation_x, rotation_z, false)[2]
+        ]:
+        [
+            x*cos(rotation_z) - y*sin(rotation_z)*cos(rotation_x) + z*sin(rotation_z)*sin(rotation_x),
+            x*sin(rotation_z) + y*cos(rotation_z)*cos(rotation_x) - z*cos(rotation_z)*sin(rotation_x),
+            y*sin(rotation_x) + z*cos(rotation_x)
+        ];
+
+
+// ====================================================================
+//                      Demo of helper functions 
+// ====================================================================
+
 
 // top left back corner
 color("Indigo")
-translate(vec_rotated_xz(0, 17, 0, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xz(0, 17, 0, local_rotation_x, local_rotation_z, local_bottom_row))
     cube([1, 1, 1]);
 
 // top right back corner
 color("pink")
-translate(vec_rotated_xz(18, 17, 0, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xz(18, 17, 0, local_rotation_x, local_rotation_z, local_bottom_row))
     cube([1, 1, 1]);
 
 // bottom left back corner
 color("teal")
-translate(vec_rotated_xz(0, 0, 0, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xz(0, 0, 0, local_rotation_x, local_rotation_z, local_bottom_row))
     cube([1, 1, 1]);
 
 // bottom right back corner
 color("aquamarine")
-translate(vec_rotated_xz(18, 0, 0, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xz(18, 0, 0, local_rotation_x, local_rotation_z, local_bottom_row))
     cube([1, 1, 1]);
 
 
@@ -168,23 +190,26 @@ translate(vec_rotated_xz(18, 0, 0, local_rotation_x, local_rotation_z))
 
 // top left front corner
 color("black")
-translate(vec_rotated_xz(0, 17, 5.2, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xz(0, 17, 5.2, local_rotation_x, local_rotation_z, local_bottom_row))
       cube([1, 1, 1]);
 
 // top right front corner
 color("red")
-translate(vec_rotated_xz(18, 17, 5.2, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xz(18, 17, 5.2, local_rotation_x, local_rotation_z, local_bottom_row))
     cube([1, 1, 1]);
 
 
 // bottom left front corner
 color("orange")
-translate(vec_rotated_xz(0, 0, 5.2, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xz(0, 0, 5.2, local_rotation_x, local_rotation_z, local_bottom_row))
     cube([1, 1, 1]);
 
 // bottom right front corner
 color("yellow")
-translate(vec_rotated_xz(18, 0, 5.2, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xz(18, 0, 5.2, local_rotation_x, local_rotation_z, local_bottom_row))
     cube([1, 1, 1]);
 
 
+// plane to illustrate bottom to ensure no points are in the negatie z-axis visually
+translate([0, 0, -0.01])
+    cube([50, 50, 0.01]);

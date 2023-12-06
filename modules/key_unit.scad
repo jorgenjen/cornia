@@ -140,6 +140,11 @@ module key(
 
 }
 
+
+
+// centered key jus calls key() and removes 1mm extra to the left and adds it to the right and 
+// then translates it back to the origin. hence the key is centered and the side lip is unifor on the parralell sides 
+    // needed as when using rotation around x or y as it does not mesh well. Only works flat keyboard top surface
 module centered_key(
         plate_slack = 0.05,         // Slack for the top square hole
         plate_depth_slack = 0.05,   // slack for thickness of ledge for top square

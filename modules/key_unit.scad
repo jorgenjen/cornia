@@ -6,7 +6,8 @@ $fn = 32; // set the resolution of the model (Low during developmet for fast ren
 
 // local variables only used for demo of module and functions in this file
 local_rotation_x = -20;
-local_rotation_z = -0;
+local_rotation_y = -30;
+local_rotation_z = 10;
 local_bottom_row = true;
 
 // Naming explained:
@@ -18,23 +19,24 @@ local_bottom_row = true;
 // for hotswap width is the short side 
 // height is the long side with the connectors top and bottom
 module key(
-        plate_slack = 0.05,             // Slack for the top square hole
-        plate_depth_slack = 0.05,       // slack for thickness of ledge for top square
-        width_padding = 0.25,           // Slack for widht of hotswap cutout
-        height_padding = 0.25,          // Slack for height of hotswap cutout
-        exit_padding = 0.5,             // Slack for width of rectangle for hotswap metallic contact pad
-        ledge_width = 0.5,              // How big the ledge is around the cutout to hold the hotswap
-        center_radius_slack = 0.35,     // Slack for center hole (big center pin of switch)
-        sides_radius_slack = 0.25,      // Slack for side holes (smaller pins of switch)
-        rotation_x = local_rotation_x,  // rotation of the xy plane so normal 2D rotation around z-axis (e.g, for splay of columns)
-        rotation_z = local_rotation_z,  // rotation of the yz plane so normal 2D rotation around x-axis (e.g, for creating key wells)
+        plate_slack = 0.05,         // Slack for the top square hole
+        plate_depth_slack = 0.05,   // slack for thickness of ledge for top square
+        width_padding = 0.25,       // Slack for widht of hotswap cutout
+        height_padding = 0.25,      // Slack for height of hotswap cutout
+        exit_padding = 0.5,         // Slack for width of rectangle for hotswap metallic contact pad
+        ledge_width = 0.5,          // How big the ledge is around the cutout to hold the hotswap
+        center_radius_slack = 0.35, // Slack for center hole (big center pin of switch)
+        sides_radius_slack = 0.25,  // Slack for side holes (smaller pins of switch)
+        rotation_x = 0,             // rotation around the z-axis (e.g, for splay of columns)
+        rotation_y = 0,             // rotation around the y-axis (e.g, for curving keys in or outwards for side sclupting)
+        rotation_z = 0,             // rotation around the x-axis (e.g, for creating key wells)
         ){
 
     
 
-    translate([0, 0, compute_translate_z(rotation_x, rotation_z)])
+    translate([0, 0, compute_translate_z_xyz(rotation_x, rotation_y, rotation_z)])
     // color("pink") // Set to one to make it look like one (uncomment for development of module)
-    rotate([rotation_x, 0, rotation_z])
+    rotate([rotation_x, rotation_y, rotation_z])
     translate([0, 0, 0.9 + plate_depth_slack + 3]) // move the bottom to z == 0
     union(){
         // plate part
@@ -139,25 +141,22 @@ module key(
 }
 
 module centered_key(
-        plate_slack = 0.05,             // Slack for the top square hole
-        plate_depth_slack = 0.05,       // slack for thickness of ledge for top square
-        width_padding = 0.25,           // Slack for widht of hotswap cutout
-        height_padding = 0.25,          // Slack for height of hotswap cutout
-        exit_padding = 0.5,             // Slack for width of rectangle for hotswap metallic contact pad
-        ledge_width = 0.5,              // How big the ledge is around the cutout to hold the hotswap
-        center_radius_slack = 0.35,     // Slack for center hole (big center pin of switch)
-        sides_radius_slack = 0.25,      // Slack for side holes (smaller pins of switch)
-        rotation_x = local_rotation_x,  // rotation of the xy plane so normal 2D rotation around z-axis (e.g, for splay of columns)
-        rotation_z = local_rotation_z,  // rotation of the yz plane so normal 2D rotation around x-axis (e.g, for creating key wells)
+        plate_slack = 0.05,         // Slack for the top square hole
+        plate_depth_slack = 0.05,   // slack for thickness of ledge for top square
+        width_padding = 0.25,       // Slack for widht of hotswap cutout
+        height_padding = 0.25,      // Slack for height of hotswap cutout
+        exit_padding = 0.5,         // Slack for width of rectangle for hotswap metallic contact pad
+        ledge_width = 0.5,          // How big the ledge is around the cutout to hold the hotswap
+        center_radius_slack = 0.35, // Slack for center hole (big center pin of switch)
+        sides_radius_slack = 0.25,  // Slack for side holes (smaller pins of switch)
+        rotation_x = 0,             // rotation around the z-axis (e.g, for splay of columns)                              / rotation of the xy plane so normal 2D rotation around z-axis (e.g, for splay of columns)
+        rotation_y = 0,             // rotation around the y-axis (e.g, for curving keys in or outwards for side sclupting)
+        rotation_z = 0,             // rotation around the x-axis (e.g, for creating key wells)
         ){
 
-    // move the key up along z-axis so the bottom of the key is at z == 0
-    // This is the translattion that bottom_row accounts for
-    // translate_by = rotation_x < 0 ? vec_rotated_xz(0, 17, 5.2, rotation_x, rotation_z, false): [0, 0, 0];
-    // echo("Translate by: ", translate_by);
 
-    translate([0, 0, compute_translate_z(rotation_x, rotation_z)])
-    rotate([rotation_x, 0, rotation_z])
+    translate([0, 0, compute_translate_z_xyz(rotation_x, rotation_y, rotation_z)])
+    rotate([rotation_x, rotation_y, rotation_z])
     // color("orange")
     translate([-1, 0, 0])
         union(){
@@ -183,73 +182,91 @@ module centered_key(
         }
 }
 
-centered_key();
-
-
-translate([0, 18.7 + 18, 0])
-centered_key(rotation_x=10, rotation_z=0);
-
-translate([0, 18.7, 0])
-key(rotation_x=0, rotation_z=0);
-
 
 // ====================================================================
 //                          Helper functions 
 // ====================================================================
-    
 
-// compute the needed z-axis translation to move the top of the key to 5.2 which is thckness of the key
-// the corner that is connected to the flat middle key is the one that decides which we compute by
-    // so top row computes by bottom top corners and bottom row computes by top top corners
-function compute_translate_z(rotation_x, rotation_z) = 
+// compute the needed z-axis translation to move the lowest connected part of the key 
+// to 5.2 which is thickness of the key. The connected part is based on the rotation to decide top and bottom
+// and side rotation is used to find the lowest of the corners in front or back depending on connected side
+// then that value to get that corner to 5.2mm is computed
+    // top row keys has the bottom corners connected
+    // bottom row keys has the top corners connected
+    // middle key is assumed to have rotation around x == 0 (does not nessesarily have to be the case)
+function compute_translate_z_xyz(rotation_x, rotation_y, rotation_z) = 
     rotation_x < 0 ? 
-        5.2 - z_vec_rotated_xz(17, 5.2, rotation_x, rotation_z) : // bottom row key
-        rotation_x > 0 ? 
-            5.2 - z_vec_rotated_xz(0, 5.2, rotation_x, rotation_z) : // top row key
-            0; // middle key
+        // bottom row key
+        rotation_y < 0 ?
+            5.2 - z_vec_rotated_xyz(0, 17, 5.2, rotation_x, rotation_y) : // left is lowest 
+            5.2 - z_vec_rotated_xyz(18, 17, 5.2, rotation_x, rotation_y)  // right is lowest
+    :
+    rotation_x > 0 ? 
+        // top row key
+        rotation_y < 0 ?
+            5.2 - z_vec_rotated_xyz(0, 0, 5.2, rotation_x, rotation_y) : // left is lowest 
+            5.2 - z_vec_rotated_xyz(18, 0, 5.2, rotation_x, rotation_y)  // right is lowest
+    :
+    0; // middle key
+   
 
 
-// compute only the z-axis change for the rotation around x and z axis used in compute_translate_z
-    // so same as vec_rotated_xz but only for z-axis result is returned
-function z_vec_rotated_xz(y, z, rotation_x, rotation_z) = 
-    y*sin(rotation_x) + z*cos(rotation_x);
+// computes the z-position of point xyz after rotation along the three axis
+function z_vec_rotated_xyz(x, y, z, rotation_x, rotation_y) = 
+        -x*sin(rotation_y) + y*cos(rotation_y)*sin(rotation_x) + z*cos(rotation_y)*cos(rotation_x);
 
 
-// account_z_translate means that the key has been translated up along z-axis to make the connected corners z-axis = 5.2
-// so to get correct point location that translation must be accounted for hence the flag
-    // need flag as it's used fro computation of compute_translate_z
-function vec_rotated_xz(x, y, z, rotation_x, rotation_z) =
-        [
-            x*cos(rotation_z) - y*sin(rotation_z)*cos(rotation_x) + z*sin(rotation_z)*sin(rotation_x),
-            x*sin(rotation_z) + y*cos(rotation_z)*cos(rotation_x) - z*cos(rotation_z)*sin(rotation_x),
-            y*sin(rotation_x) + z*cos(rotation_x) + compute_translate_z(rotation_x, rotation_z) 
-        ];
+// computes the position of point xyz after rotation along the three axis
+function vec_rotated_xyz(x, y, z, rotation_x, rotation_y, rotation_z) =
+    [
+        x*cos(rotation_z)*cos(rotation_y) +
+        y*(cos(rotation_z)*sin(rotation_y)*sin(rotation_x) - sin(rotation_z)*cos(rotation_x)) + 
+        z*(cos(rotation_z)*sin(rotation_y)*cos(rotation_x) + sin(rotation_z)*sin(rotation_x))
+        ,
+        x*sin(rotation_z)*cos(rotation_y) +
+        y*(sin(rotation_z)*sin(rotation_y)*sin(rotation_x) + cos(rotation_z)*cos(rotation_x)) +
+        z*(sin(rotation_z)*sin(rotation_y)*cos(rotation_x) - cos(rotation_z)*sin(rotation_x))
+        ,
+        -x*sin(rotation_y) + y*cos(rotation_y)*sin(rotation_x) + z*cos(rotation_y)*cos(rotation_x)
+        + compute_translate_z_xyz(rotation_x, rotation_y, rotation_z)
+    ];
 
 
-            // y*sin(rotation_x) + z*cos(rotation_x) + 5.2 - vec_rotated_xz(0, 17, 5.2, rotation_x, rotation_z, false)[2]
+// ====================================================================
+//                            Demo of keys
+// ====================================================================
+
+centered_key(rotation_x=local_rotation_x, rotation_y=local_rotation_y, rotation_z=local_rotation_z);
+
+translate([0, 28.7, 0])
+key(rotation_x=local_rotation_x, rotation_y=local_rotation_y, rotation_z=local_rotation_z);
+
+
+
 // ====================================================================
 //                      Demo of helper functions 
 // ====================================================================
 
+// demonstrates the corner position calculations
 
 // top left back corner
 color("Indigo")
-translate(vec_rotated_xz(0, 17, 0, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xyz(0, 17, 0, local_rotation_x, local_rotation_y, local_rotation_z))
     cube([1, 1, 1]);
 
 // top right back corner
 color("pink")
-translate(vec_rotated_xz(18, 17, 0, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xyz(18, 17, 0, local_rotation_x, local_rotation_y, local_rotation_z))
     cube([1, 1, 1]);
 
 // bottom left back corner
 color("teal")
-translate(vec_rotated_xz(0, 0, 0, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xyz(0, 0, 0, local_rotation_x, local_rotation_y, local_rotation_z))
     cube([1, 1, 1]);
 
 // bottom right back corner
 color("aquamarine")
-translate(vec_rotated_xz(18, 0, 0, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xyz(18, 0, 0, local_rotation_x, local_rotation_y, local_rotation_z))
     cube([1, 1, 1]);
 
 
@@ -257,28 +274,28 @@ translate(vec_rotated_xz(18, 0, 0, local_rotation_x, local_rotation_z))
 
 // top left front corner
 color("black")
-translate(vec_rotated_xz(0, 17, 5.2, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xyz(0, 17, 5.2, local_rotation_x, local_rotation_y, local_rotation_z))
       cube([1, 1, 1]);
 
 // top right front corner
 color("red")
-translate(vec_rotated_xz(18, 17, 5.2, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xyz(18, 17, 5.2, local_rotation_x, local_rotation_y, local_rotation_z))
     cube([1, 1, 1]);
 
 
 // bottom left front corner
 color("green")
-translate(vec_rotated_xz(0, 0, 5.2, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xyz(0, 0, 5.2, local_rotation_x, local_rotation_y, local_rotation_z))
     cube([1, 1, 1]);
 
 // bottom right front corner
 color("yellow")
-translate(vec_rotated_xz(18, 0, 5.2, local_rotation_x, local_rotation_z))
+translate(vec_rotated_xyz(18, 0, 5.2, local_rotation_x, local_rotation_y, local_rotation_z))
     cube([1, 1, 1]);
 
 
 // plane to illustrate bottom to ensure no points are in the negatie z-axis visually
 color("lightgrey")
-// translate([-5, -5, 5.2])
+translate([-5, -5, 5.2])
 translate([0, 0, -0.01])
     cube([50, 50, 0.01]);

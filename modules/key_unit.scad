@@ -5,8 +5,8 @@ $fn = 32; // set the resolution of the model (Low during developmet for fast ren
 // =======================================================================================
 
 // local variables only used for demo of module and functions in this file
-local_rotation_x = -20;
-local_rotation_y = -30;
+local_rotation_x = 20;
+local_rotation_y = 30;
 local_rotation_z = 10;
 local_bottom_row = true;
 
@@ -237,6 +237,18 @@ function vec_rotated_xyz(x, y, z, rotation_x, rotation_y, rotation_z) =
     ];
 
 
+function base_angle(pitch_angle) =
+    180 - 90 - abs(pitch_angle);
+
+//
+function min_padding(pitch_angle_1, pitch_angle_2, plate_2_keycap_height) = 
+    let (top_angle = 180 - base_angle(pitch_angle_1) - base_angle(pitch_angle_2))
+    sin(top_angle) * plate_2_keycap_height / sin(base_angle(pitch_angle_2));
+    
+
+    
+
+
 // ====================================================================
 //                            Demo of keys
 // ====================================================================
@@ -249,10 +261,11 @@ key(rotation_x=local_rotation_x, rotation_y=local_rotation_y, rotation_z=local_r
 
 
 // ====================================================================
-//                      Demo of helper functions 
+//              Demo of corner computation functions 
 // ====================================================================
 
-// demonstrates the corner position calculations
+// uses the functions to place the small cubes onto the corners
+// illustrates correct corner computations
 
 // top left back corner
 color("Indigo")
@@ -304,3 +317,53 @@ color("lightgrey")
 translate([-5, -5, 5.2])
 translate([0, 0, -0.01])
     cube([50, 50, 0.01]);
+
+
+
+// ====================================================================
+//                   Demo of min_padding function
+// ====================================================================
+
+// transparent cubes illustrates the space taken by the swithc and keycap when placed in the socket
+plate2switch_height = 7.3;
+pitch_front = 30; 
+pitch_back = -10;
+
+
+echo("min_padding: ", min_padding(pitch_front, pitch_back, plate2switch_height));
+
+echo("TRanslate z: ", compute_translate_z_xyz(pitch_front, 0, 0));
+
+translate([50, 0, 0])
+union() {
+    // back key
+    union() {
+        color([0.5, 0.9, 0.5, 0.5])
+        translate(vec_rotated_xyz(0, 0, 5.2, pitch_back, 0, 0))
+        rotate([pitch_back, 0, 0])
+            cube([18, 17, plate2switch_height]);
+        centered_key(rotation_x=pitch_back, rotation_y=0, rotation_z=0);
+    }
+
+    // front key
+    translate([
+                   0, 
+                   min_padding(pitch_front, pitch_back, plate2switch_height) + 
+                   vec_rotated_xyz(0, 17, 5.2, pitch_back, 0, 0)[1] -
+                   vec_rotated_xyz(0, 0, 5.2, pitch_front, 0, 0)[1],
+                   0
+              ])
+        union() {
+            color([0.5, 0.5, 0.5, 0.5])
+            translate(vec_rotated_xyz(0, 0, 5.2, pitch_front, 0, 0))
+            rotate([pitch_front, 0, 0])
+                cube([18, 17, plate2switch_height]);
+            centered_key(rotation_x=pitch_front, rotation_y=0, rotation_z=0);
+        }
+
+}
+
+
+color([0.1, 0.1, 0.9, 0.5])
+translate([25, 0, 0])
+cube([50, 0.1, 50]);

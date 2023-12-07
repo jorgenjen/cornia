@@ -325,8 +325,8 @@ translate([0, 0, -0.01])
 // ====================================================================
 
 // transparent cubes illustrates the space taken by the swithc and keycap when placed in the socket
-plate2switch_height = 7.3;
-pitch_front = 30; 
+plate2switch_height = 10.3;
+pitch_front = 40; 
 pitch_back = -10;
 
 
@@ -367,3 +367,39 @@ union() {
 color([0.1, 0.1, 0.9, 0.5])
 translate([25, 0, 0])
 cube([50, 0.1, 50]);
+
+
+
+// ====================================================================
+//                   Demo of alignemt along top of key caps 
+// ====================================================================
+
+// uses the same variables for demo as previ demo of min_padding
+
+translate([75, 0, 0])
+union() {
+    // back key
+    union() {
+        color([0.7, 0.1, 0.9, 0.5])
+        translate(vec_rotated_xyz(0, 0, 5.2, pitch_back, 0, 0))
+        rotate([pitch_back, 0, 0])
+            cube([18, 17, plate2switch_height]);
+        centered_key(rotation_x=pitch_back, rotation_y=0, rotation_z=0);
+    }
+
+    // front key
+    translate(
+                vec_rotated_xyz(0, 17, 5.2 + plate2switch_height, pitch_back, 0, 0) -
+                vec_rotated_xyz(0, 0, 5.2 + plate2switch_height, pitch_front, 0, 0)
+            )
+        union() {
+            color([0.9, 0.9, 0.9, 0.5])
+            translate(vec_rotated_xyz(0, 0, 5.2, pitch_front, 0, 0))
+            rotate([pitch_front, 0, 0])
+                cube([18, 17, plate2switch_height]);
+            centered_key(rotation_x=pitch_front, rotation_y=0, rotation_z=0);
+        }
+
+}
+
+echo("test test test test", [5, 3] - [2, 1]);

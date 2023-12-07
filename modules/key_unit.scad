@@ -246,6 +246,10 @@ function min_padding(pitch_angle_1, pitch_angle_2, plate_2_keycap_height) =
     sin(top_angle) * plate_2_keycap_height / sin(base_angle(pitch_angle_2));
     
 
+function next_key_translate(prev_translated, prev_pitch, cur_pich, roll, yaw, plate2switch_height) = 
+    prev_translated + 
+    vec_rotated_xyz(0, 17, 5.2 + plate2switch_height, pitch_back, roll, yaw) -
+    vec_rotated_xyz(0, 0, 5.2 + plate2switch_height, pitch_front, roll, yaw);
     
 
 
@@ -325,9 +329,12 @@ translate([0, 0, -0.01])
 // ====================================================================
 
 // transparent cubes illustrates the space taken by the swithc and keycap when placed in the socket
-plate2switch_height = 10.3;
-pitch_front = 40; 
-pitch_back = -10;
+plate2switch_height = 1.3;
+pitch_front = 0; 
+pitch_back = -25;
+
+roll = -50;
+yaw = 30;
 
 
 echo("min_padding: ", min_padding(pitch_front, pitch_back, plate2switch_height));
@@ -376,28 +383,32 @@ cube([50, 0.1, 50]);
 
 // uses the same variables for demo as previ demo of min_padding
 
+
+back_key_translate = [10, 5, 9];
+
 translate([75, 0, 0])
 union() {
     // back key
+    translate(back_key_translate) 
     union() {
         color([0.7, 0.1, 0.9, 0.5])
-        translate(vec_rotated_xyz(0, 0, 5.2, pitch_back, 0, 0))
-        rotate([pitch_back, 0, 0])
+        translate(vec_rotated_xyz(0, 0, 5.2, pitch_back, roll, yaw))
+        rotate([pitch_back, roll, yaw])
             cube([18, 17, plate2switch_height]);
-        centered_key(rotation_x=pitch_back, rotation_y=0, rotation_z=0);
+        centered_key(rotation_x=pitch_back, rotation_y=roll, rotation_z=yaw);
     }
 
     // front key
-    translate(
-                vec_rotated_xyz(0, 17, 5.2 + plate2switch_height, pitch_back, 0, 0) -
-                vec_rotated_xyz(0, 0, 5.2 + plate2switch_height, pitch_front, 0, 0)
-            )
+    translate(next_key_translate(back_key_translate, pitch_back, pitch_front, roll, yaw, plate2switch_height))
+            //     vec_rotated_xyz(0, 17, 5.2 + plate2switch_height, pitch_back, roll, yaw) -
+            //     vec_rotated_xyz(0, 0, 5.2 + plate2switch_height, pitch_front, roll, yaw)
+            // )
         union() {
             color([0.9, 0.9, 0.9, 0.5])
-            translate(vec_rotated_xyz(0, 0, 5.2, pitch_front, 0, 0))
-            rotate([pitch_front, 0, 0])
+            translate(vec_rotated_xyz(0, 0, 5.2, pitch_front, roll, yaw))
+            rotate([pitch_front, roll, yaw])
                 cube([18, 17, plate2switch_height]);
-            centered_key(rotation_x=pitch_front, rotation_y=0, rotation_z=0);
+            centered_key(rotation_x=pitch_front, rotation_y=roll, rotation_z=yaw);
         }
 
 }

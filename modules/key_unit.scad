@@ -119,7 +119,6 @@ module key(
 
 
             // The 3 holes in a line on the midplate
-
             translate([9+1, 8.5, -3.001 - 0.9 - plate_depth_slack])
                 cylinder(h = 10, r = 1.6 + center_radius_slack);
             color("indigo")
@@ -237,15 +236,10 @@ function vec_rotated_xyz(x, y, z, rotation_x, rotation_y, rotation_z) =
     ];
 
 
-function base_angle(pitch_angle) =
-    180 - 90 - abs(pitch_angle);
-
-//
-function min_padding(pitch_angle_1, pitch_angle_2, plate_2_keycap_height) = 
-    let (top_angle = 180 - base_angle(pitch_angle_1) - base_angle(pitch_angle_2))
-    sin(top_angle) * plate_2_keycap_height / sin(base_angle(pitch_angle_2));
     
 
+// computes next key translate based on previous
+    // used to bild up the columns from bottom up
 function next_key_translate(prev_translated, prev_pitch, cur_pich, roll, yaw, plate2switch_height) = 
     prev_translated + 
     vec_rotated_xyz(0, 17, 5.2 + plate2switch_height, pitch_back, roll, yaw) -
@@ -318,78 +312,31 @@ translate(vec_rotated_xyz(18, 0, 5.2, local_rotation_x, local_rotation_y, local_
 
 // plane to illustrate bottom to ensure no points are in the negatie z-axis visually
 color("lightgrey")
-translate([-5, -5, 5.2])
+// translate([-5, -5, 5.2])
 translate([0, 0, -0.01])
-    cube([50, 50, 0.01]);
-
-
-
-// ====================================================================
-//                   Demo of min_padding function
-// ====================================================================
-
-// transparent cubes illustrates the space taken by the swithc and keycap when placed in the socket
-plate2switch_height = 1.3;
-pitch_front = 0; 
-pitch_back = -25;
-
-roll = -50;
-yaw = 30;
-
-
-echo("min_padding: ", min_padding(pitch_front, pitch_back, plate2switch_height));
-
-echo("TRanslate z: ", compute_translate_z_xyz(pitch_front, 0, 0));
-
-translate([50, 0, 0])
-union() {
-    // back key
-    union() {
-        color([0.5, 0.9, 0.5, 0.5])
-        translate(vec_rotated_xyz(0, 0, 5.2, pitch_back, 0, 0))
-        rotate([pitch_back, 0, 0])
-            cube([18, 17, plate2switch_height]);
-        centered_key(rotation_x=pitch_back, rotation_y=0, rotation_z=0);
-    }
-
-    // front key
-    translate([
-                   0, 
-                   min_padding(pitch_front, pitch_back, plate2switch_height) + 
-                   vec_rotated_xyz(0, 17, 5.2, pitch_back, 0, 0)[1] -
-                   vec_rotated_xyz(0, 0, 5.2, pitch_front, 0, 0)[1],
-                   0
-              ])
-        union() {
-            color([0.5, 0.5, 0.5, 0.5])
-            translate(vec_rotated_xyz(0, 0, 5.2, pitch_front, 0, 0))
-            rotate([pitch_front, 0, 0])
-                cube([18, 17, plate2switch_height]);
-            centered_key(rotation_x=pitch_front, rotation_y=0, rotation_z=0);
-        }
-
-}
-
-
-color([0.1, 0.1, 0.9, 0.5])
-translate([25, 0, 0])
-cube([50, 0.1, 50]);
-
+    cube([100, 50, 0.01]);
 
 
 // ====================================================================
 //                   Demo of alignemt along top of key caps 
 // ====================================================================
 
-// uses the same variables for demo as previ demo of min_padding
 
+// transparent cubes illustrates the space taken by the switch and keycap when placed in the socket
+// in reality they are smaller in widht and height but follows the spacing of 18x17
+plate2switch_height = 7.3;
+pitch_front = 30; 
+pitch_back = 5;
 
-back_key_translate = [10, 5, 9];
+roll = -20;
+yaw = -10;
 
-translate([75, 0, 0])
+back_key_translate = [10, 5, 0];
+
+translate([50, 0, 0])
 union() {
     // back key
-    translate(back_key_translate) 
+    translate(back_key_translate) // start point of column set by stagger in implementation
     union() {
         color([0.7, 0.1, 0.9, 0.5])
         translate(vec_rotated_xyz(0, 0, 5.2, pitch_back, roll, yaw))
@@ -400,9 +347,6 @@ union() {
 
     // front key
     translate(next_key_translate(back_key_translate, pitch_back, pitch_front, roll, yaw, plate2switch_height))
-            //     vec_rotated_xyz(0, 17, 5.2 + plate2switch_height, pitch_back, roll, yaw) -
-            //     vec_rotated_xyz(0, 0, 5.2 + plate2switch_height, pitch_front, roll, yaw)
-            // )
         union() {
             color([0.9, 0.9, 0.9, 0.5])
             translate(vec_rotated_xyz(0, 0, 5.2, pitch_front, roll, yaw))
@@ -413,4 +357,23 @@ union() {
 
 }
 
-echo("test test test test", [5, 3] - [2, 1]);
+
+
+
+
+
+// ==========================UNUSED FUNCTIONS==========================
+//                      added for future reference 
+// ====================================================================
+
+// min height functions computed based on triangle does ensure non-interference of keycaps
+// but does not align according to the z-axis which is not what I desired for this project
+// so they are not used but could be usefull if you want a smaller board that does not align
+// the keycaps and have overlap that does not interfere. Seems like from testing that it's not 
+// perfect for some angles and coputes too large gap
+function base_angle(pitch_angle) =
+    180 - 90 - abs(pitch_angle);
+
+function min_padding(pitch_angle_1, pitch_angle_2, plate_2_keycap_height) = 
+    let (top_angle = 180 - base_angle(pitch_angle_1) - base_angle(pitch_angle_2))
+    sin(top_angle) * plate_2_keycap_height / sin(base_angle(pitch_angle_2));

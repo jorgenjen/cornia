@@ -240,10 +240,10 @@ function vec_rotated_xyz(x, y, z, rotation_x, rotation_y, rotation_z) =
 
 // computes next key translate based on previous
     // used to bild up the columns from bottom up
-function next_key_translate(prev_translated, prev_pitch, cur_pich, roll, yaw, plate2switch_height) = 
+function next_key_translate(prev_translated, prev_pitch, cur_pitch, roll, yaw, plate2switch_height) = 
     prev_translated + 
-    vec_rotated_xyz(0, 17, 5.2 + plate2switch_height, pitch_back, roll, yaw) -
-    vec_rotated_xyz(0, 0, 5.2 + plate2switch_height, pitch_front, roll, yaw);
+    vec_rotated_xyz(0, 17, 5.2 + plate2switch_height, prev_pitch, roll, yaw) -
+    vec_rotated_xyz(0, 0, 5.2 + plate2switch_height, cur_pitch, roll, yaw);
     
 
 
@@ -325,13 +325,14 @@ translate([0, 0, -0.01])
 // transparent cubes illustrates the space taken by the switch and keycap when placed in the socket
 // in reality they are smaller in widht and height but follows the spacing of 18x17
 plate2switch_height = 7.3;
-pitch_front = 30; 
-pitch_back = 5;
+pitch_back = -30;
+pitch_middle = 20;
+pitch_front = 50; 
 
-roll = -20;
-yaw = -10;
+roll = -40;
+yaw = -12;
 
-back_key_translate = [10, 5, 0];
+back_key_translate = [10, 5, 5];
 
 translate([50, 0, 0])
 union() {
@@ -345,10 +346,22 @@ union() {
         centered_key(rotation_x=pitch_back, rotation_y=roll, rotation_z=yaw);
     }
 
-    // front key
-    translate(next_key_translate(back_key_translate, pitch_back, pitch_front, roll, yaw, plate2switch_height))
+    // middle key
+    translate(next_key_translate(back_key_translate, pitch_back, pitch_middle, roll, yaw, plate2switch_height))
         union() {
             color([0.9, 0.9, 0.9, 0.5])
+            translate(vec_rotated_xyz(0, 0, 5.2, pitch_middle, roll, yaw))
+            rotate([pitch_middle, roll, yaw])
+                cube([18, 17, plate2switch_height]);
+            centered_key(rotation_x=pitch_middle, rotation_y=roll, rotation_z=yaw);
+        }
+
+
+    prev_translate = next_key_translate(back_key_translate, pitch_back, pitch_middle, roll, yaw, plate2switch_height);
+    // front key
+    translate(next_key_translate(prev_translate, pitch_middle, pitch_front, roll, yaw, plate2switch_height))
+        union() {
+            color([0.2, 0.7, 0.4, 0.5])
             translate(vec_rotated_xyz(0, 0, 5.2, pitch_front, roll, yaw))
             rotate([pitch_front, roll, yaw])
                 cube([18, 17, plate2switch_height]);

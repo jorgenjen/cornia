@@ -52,21 +52,8 @@ module main_keys(
                     translate(current_translate)
                         centered_key(rotation_x=pitch_angles[j][i], rotation_y=roll_angles[i], rotation_z=yaw_angles[i]);
 
-                    if (j != 0){ //&& i == 0){
+                    if (j != 0) {
                         // draw the filler between key j and j-1 (current and previous)
-                        echo("Points: ", [
-                            // prev key points
-                            prev_translate + vec_rotated_xyz(0, spacing_y, 0, pitch_angles[j-1][i], roll_angles[i], yaw_angles[i]), // 0 -- top left back
-                                           prev_translate + vec_rotated_xyz(spacing_x, spacing_y, 0, pitch_angles[j-1][i], roll_angles[i], yaw_angles[i]), // 1 -- top right back
-                                           prev_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height, pitch_angles[j-1][i], roll_angles[i], yaw_angles[i]), // 2 -- top right front
-                                           prev_translate + vec_rotated_xyz(0, spacing_y, key_module_height, pitch_angles[j-1][i], roll_angles[i], yaw_angles[i]), // 3 -- top left front
-
-                                           // current key points
-                                           current_translate + vec_rotated_xyz(0, 0, 0, pitch_angles[j][i], roll_angles[i], yaw_angles[i]), // 4 -- bottom left back
-                                           current_translate + vec_rotated_xyz(spacing_x, 0, 0, pitch_angles[j][i], roll_angles[i], yaw_angles[i]), // 5 -- bottom right back
-                                           current_translate + vec_rotated_xyz(spacing_x, 0, key_module_height, pitch_angles[j][i], roll_angles[i], yaw_angles[i]), // 6 -- bottom right front 
-                                           current_translate + vec_rotated_xyz(0, 0, key_module_height, pitch_angles[j][i], roll_angles[i], yaw_angles[i]), // 7 -- bottom left front 
-                        ]);
                         color("antiquewhite")
                         polyhedron(
                             points = [
@@ -108,7 +95,6 @@ module main_keys(
                                             
                     }
                 }
-
             }
         }
     }

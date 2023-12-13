@@ -14,39 +14,88 @@ use <modules/key_unit.scad>
 
     * Default values are set for each param but each can be ovverriden
 */
+
+
 module main_keys(
-        stagger = [0, 2, 8, 3, -7, -9],                            
-        well_depth = [5, 5, 0, 5, 5, 5],                            
+        stagger = [0, 2, 8, 3, -7, -7],                            
+        // well_depth = [5, 5, 0, 5, 5, 14],                            
+        well_depth = [0, 0, 0, 0, 0, 6.1],                            
         roll_angles = [10, 0, 0, 0, -22, -22],
         pitch_angles = [
                         // [0, 0, 0, 0, 0, 0],              
                         [-22, -22, -22, -42, -22, -22],     // bottom row
-                        [0, 0, 0, 0, 0, 0],                 // middle row
-                        [10, 20, 10, 10, 10, 10]            // top row
+                        [  0,   0,   0,   0,   0,   0],     // middle row
+                        [ 10,  20,  10,  10,  10,  10]      // top row
                         // [0, 0, 0, 0, 0, 0],                 
                        ], //[for (i = [0: 2]) [for (j = [0:5]) 0]],      
-        yaw_angles = [0, 0, 0, 0, -5, -10],                         
+        yaw_angles = [0, 0, 0, 0, -5, -5],                         
         last_col_key_count = 2,
         spacing_x = 18,
         spacing_y = 17,
         key_module_height = 5.2,
         plate2cap_dist = 7.3,
     ){
+
+    // - vec_rotated_xyz(0, 0, key_module_height, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])[0]
+    // Helper function to find next initial translate of column
+    function next_col_x_translate(cur_col_index, col_index, initial_x_translate) =  
+        cur_col_index == col_index 
+            ? initial_x_translate - vec_rotated_xyz(0, 0, key_module_height, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])[0]
+            : cur_col_index == 0 
+                ?  next_col_x_translate( // first column -- same as posetive diff
+                            cur_col_index + 1, 
+                            col_index, 
+                            initial_x_translate + vec_rotated_xyz(spacing_x, 0, key_module_height, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])[0]
+                            - vec_rotated_xyz(0, 0, key_module_height, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])[0]
+                            )
+                // ? 9
+                : roll_angles[cur_col_index - 1] - roll_angles[cur_col_index] >= 0
+                    ? next_col_x_translate( // top aligned
+                            cur_col_index + 1, 
+                            col_index, 
+                            initial_x_translate + vec_rotated_xyz(spacing_x, 0, key_module_height, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])[0]
+                            - vec_rotated_xyz(0, 0, key_module_height, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])[0]
+                            )
+                    : next_col_x_translate( // bottom aligned
+                            cur_col_index + 1, 
+                            col_index, 
+                            initial_x_translate + vec_rotated_xyz(spacing_x, 0, 0, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])[0]
+                            - vec_rotated_xyz(0, 0, key_module_height, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])[0]
+                            );
+                    // : 5;
+
+    // echo()
+    // echo(vec_rotated_xyz(spacing_x, 0, key_module_height, pitch_angles[0][0], roll_angles[0], yaw_angles[0])[0])
+    echo("next_col_translate", next_col_x_translate(0, 2, 0));
     prev_x_max = 0;
+
+
+    // color("indigo")
+    // translate([next_col_x_translate(0, 5, 0), -200, -200])
+    //     cube([0.00001, 400, 400]);
 
     col_count = last_col_key_count == 0 ? 4 : 5;
     for (i = [0:col_count]) {
         // columns
 
         // x here must be dynamic based on prev yaw angles (cummulative)
-        let (initial_translate = [spacing_x * i, stagger[i], well_depth[i]], 
-             col_pitches = [for (j = [0:2]) pitch_angles[j][i]]) {
+        let (
+                // initial_translate = [spacing_x * i, stagger[i], well_depth[i]], 
+                initial_translate = [next_col_x_translate(0, i, 0), stagger[i], well_depth[i]], 
+                col_pitches = [for (j = [0:2]) pitch_angles[j][i]]
+            ){
+
+            if ( i > 0 ) {
+                echo("Col:", i, " angle_diff ", roll_angles[i-1] - roll_angles[i]);
+            }
+
             for (j = [0:2]) {
                 // individual keys in column
-                let (current_translate = next_key_translate(j, col_pitches, initial_translate, roll_angles[i], yaw_angles[i], plate2cap_dist),
-                    prev_translate = j != 0 ? 
-                                    next_key_translate(j-1, col_pitches, initial_translate, roll_angles[i], yaw_angles[i], plate2cap_dist) :
-                                    [] // not used when j == 0
+                let (
+                        current_translate = next_key_translate(j, col_pitches, initial_translate, roll_angles[i], yaw_angles[i], plate2cap_dist),
+                        prev_translate = j != 0 ? 
+                                        next_key_translate(j-1, col_pitches, initial_translate, roll_angles[i], yaw_angles[i], plate2cap_dist) :
+                                        [] // not used when j == 0
                 ){
 
                     translate(current_translate)
@@ -54,7 +103,7 @@ module main_keys(
 
                     if (j != 0) {
                         // draw the filler between key j and j-1 (current and previous)
-                        color("antiquewhite")
+                        color("aquamarine")
                         polyhedron(
                             points = [
                                         // prev key points
@@ -92,7 +141,6 @@ module main_keys(
                                             //     [3, 0, 4, 7]  // left   -- towards prev column to left
                                             // ]
                         );
-                                            
                     }
                 }
             }

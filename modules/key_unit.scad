@@ -6,7 +6,7 @@ $fn = 32; // set the resolution of the model (Low during developmet for fast ren
 
 // local variables only used for demo of module and functions in this file
 local_rotation_x = 20;
-local_rotation_y = 30;
+local_rotation_y = -30;
 local_rotation_z = 10;
 local_bottom_row = true;
 
@@ -239,13 +239,15 @@ function vec_rotated_xyz(x, y, z, rotation_x, rotation_y, rotation_z) =
 
 // computes next key translate based on previous translates recursively
 //     used to build up the columns from bottom up
-function next_key_translate(col_pos, col_pitches, initial_translate, roll, yaw, plate2switch_height) =
+function next_key_translate(col_pos, col_pitches, initial_translate, roll, yaw, plate2switch_height, padding) =
     col_pos == 0 ?
         initial_translate
     :
-    next_key_translate(col_pos - 1, col_pitches, initial_translate, roll, yaw, plate2switch_height) + 
+    next_key_translate(col_pos - 1, col_pitches, initial_translate, roll, yaw, plate2switch_height, padding) + 
     vec_rotated_xyz(0, 17, 5.2 + plate2switch_height, col_pitches[col_pos - 1], roll, yaw) -
-    vec_rotated_xyz(0, 0, 5.2 + plate2switch_height, col_pitches[col_pos], roll, yaw);
+    vec_rotated_xyz(0, 0, 5.2 + plate2switch_height, col_pitches[col_pos], roll, yaw) + 
+    [0, padding[col_pos-1], 0] // padding between each key in column (row_padding)
+    ;
         
     
 

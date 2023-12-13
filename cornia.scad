@@ -31,8 +31,8 @@ module main_keys(
         yaw_angles = [0, 0, 0, 0, -5, -5],                         
         column_padding = [5, 0, 0, 0, 2],    // distance between each column (can be negative)
         row_padding = [                         // individual padding for each row in each column (can be negative)
-                        [0, 0, 0, 0, 0, 0],         // between bottom and middle row in column
-                        [0, 0, 0, 0, 0, 0]          // between middle and top row in column
+                        [0, 0, 2, 0, 0, 0],         // between bottom and middle row in column
+                        [0, 0, 0, 0, 3, 0]          // between middle and top row in column
                       ],
         last_col_key_count = 2,
         spacing_x = 18,
@@ -72,9 +72,6 @@ module main_keys(
         cur_col_index == col_index 
             ? cur_col_padding
             : compute_col_padding(cur_col_index + 1, col_index, cur_col_padding + column_padding[cur_col_index]);
-            // : cur_col_index == 0
-                // ? compute_col_padding(cur_col_index + 1, col_index, cur_col_padding + column_padding[cur_col_index])
-                // : compute_col_padding(cur_col_index + 1, col_index, cur_col_padding);
 
 
     // echo()
@@ -96,7 +93,11 @@ module main_keys(
         // x here must be dynamic based on prev yaw angles (cummulative)
         let (
                 // initial_translate = [spacing_x * i, stagger[i], well_depth[i]], 
-                initial_translate = [next_col_x_translate(0, i, 0) + (i>0 ? compute_col_padding(0, i, 0) : 0), stagger[i], well_depth[i]], 
+                initial_translate = [
+                                        next_col_x_translate(0, i, 0) + (i>0 ? compute_col_padding(0, i, 0) : 0),
+                                        stagger[i], 
+                                        well_depth[i]
+                                    ], 
                 col_pitches = [for (j = [0:2]) pitch_angles[j][i]]
             ){
 
@@ -108,9 +109,9 @@ module main_keys(
             for (j = [0:2]) {
                 // individual keys in column
                 let (
-                        current_translate = next_key_translate(j, col_pitches, initial_translate, roll_angles[i], yaw_angles[i], plate2cap_dist),
+                        current_translate = next_key_translate(j, col_pitches, initial_translate, roll_angles[i], yaw_angles[i], plate2cap_dist, [row_padding[0][i], row_padding[1][i]]),
                         prev_translate = j != 0 ? 
-                                        next_key_translate(j-1, col_pitches, initial_translate, roll_angles[i], yaw_angles[i], plate2cap_dist) :
+                                        next_key_translate(j-1, col_pitches, initial_translate, roll_angles[i], yaw_angles[i], plate2cap_dist, [row_padding[0][i], row_padding[1][i]]) :
                                         [] // not used when j == 0
                 ){
 

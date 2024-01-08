@@ -1,4 +1,5 @@
 use <modules/key_unit.scad>
+use <modules/column_gap_filler_methods.scad>
 
 /* Creates the key grid/well the keys used by all fingers besides the thumb 
     * stagger: stagger of the key columns -- offset along y-axis where each column starts at the bottom [list]
@@ -29,7 +30,7 @@ module main_keys(
                         // [0, 0, 0, 0, 0, 0],                 
                        ], //[for (i = [0: 2]) [for (j = [0:5]) 0]],      
         yaw_angles = [0, 0, 0, 0, -5, -5],                         
-        column_padding = [5, 0, 0, 0, 2],    // distance between each column (can be negative)
+        column_padding = [5, 0, -1, 0, 2],    // distance between each column (can be negative)
         row_padding = [                         // individual padding for each row in each column (can be negative)
                         [0, 0, 2, 0, 0, 0],         // between bottom and middle row in column
                         [0, 0, 0, 0, 3, 0]          // between middle and top row in column
@@ -98,6 +99,13 @@ module main_keys(
                                         stagger[i], 
                                         well_depth[i]
                                     ], 
+                prev_initial_translate = i != 0 ?
+                                    [
+                                        next_col_x_translate(0, i-1, 0) + ((i-1)>0 ? compute_col_padding(0, i-1, 0) : 0),
+                                        stagger[i-1], 
+                                        well_depth[i-1]
+                                    ] 
+                                    : [0, 0, 0],
                 col_pitches = [for (j = [0:2]) pitch_angles[j][i]]
             ){
 
@@ -105,6 +113,90 @@ module main_keys(
             // if ( i > 0 ) {
             //     echo("Col:", i, " angle_diff ", roll_angles[i-1] - roll_angles[i]);
             // }
+            
+
+            // cube behind and on top of each column
+
+
+            // WORK IN PROGRESS -- continue later does not work atm
+            // function aligned_vector() = 
+            //             let(test = vec_rotated_xyz_generic(0, abs(prev[1] - curr[1]), 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i])){
+            //             curr + (abs(prev[1] - curr[1])/test[1]) * test;
+                
+
+            if (i == 5){
+                    // translate(vec_rotated_xyz_generic(0, 50, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
+                    //     cube([1, 1, 1]);
+                    
+                    // translate(initial_translate)
+                    // translate(vec_rotated_xyz(0, 0, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
+                    // translate(-vec_rotated_xyz_generic(25-spacing_x/2, 50, 25-key_module_height/2, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
+                    // rotate([pitch_angles[0][i], roll_angles[i], yaw_angles[i]])
+                    //         cube([50, 50, 50]);
+
+
+
+                   // bottom_sub_box(pitch_angles[0][i], roll_angles[i], yaw_angles[i], initial_translate, spacing_x, key_module_height);
+
+
+                    // top_sub_box(pitch_angles[2][i], roll_angles[i], yaw_angles[i], , spacing_x, key_module_height);
+
+
+                let (
+                        prev = prev_initial_translate + vec_rotated_xyz(spacing_x, 0, 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]),
+                        curr = initial_translate + vec_rotated_xyz(0, 0, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i])
+                    ) {
+
+                    // translate(vec_rotated_xyz(0, 0, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
+                    // translate(initial_translate + vec_rotated_xyz(0, 0, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
+                    if (curr[1] - prev[1] > 0) { // current col is higer up (y value) than the previous
+                        echo("Vec curr", curr);
+                        translate(curr)
+                            cube([1, 1, 1]);
+
+
+                        // translate(prev_initial_translate + vec_rotated_xyz(spacing_x, 5, 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))
+                        // echo("vec prev", prev_initial_translate + vec_rotated_xyz(spacing_x, curr[1] - prev[1], 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]));
+                        echo("Vecccy deccy", prev_initial_translate + vec_rotated_xyz(spacing_x, abs(prev[1] - curr[1])/cos(abs(pitch_angles[0][i-1])), 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))
+                        // echo("This shit", prev);
+                        // translate(prev_initial_translate + vec_rotated_xyz(spacing_x, curr[1] - prev[1], 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))
+                        // translate(prev_initial_translate + vec_rotated_xyz(spacing_x, curr[1], 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))
+                        translate(prev_initial_translate + vec_rotated_xyz(spacing_x, abs(prev[1] - curr[1])/cos(abs(pitch_angles[0][i-1])), 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))
+                            color("indigo")
+                            cube([1, 1, 1]);
+                    }
+                    else { // current col is lower down (y value) than the previous
+                        echo("vec prev", prev);
+                        translate(prev)
+                            cube([1, 1, 1]);
+
+
+                        // translate(prev_initial_translate + vec_rotated_xyz(spacing_x, 5, 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))
+                        echo("aligned vec current", initial_translate + vec_rotated_xyz(0, abs(prev[1] - curr[1])/cos(abs(pitch_angles[0][i])), 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]));
+                        translate([-0.5, 0, 0])
+                        translate(initial_translate + vec_rotated_xyz(0, abs(prev[1] - curr[1])/cos(abs(pitch_angles[0][i])), 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
+                            color("indigo")
+                            cube([1, 1, 1]);
+
+
+                        echo("dist vector ", [0, abs(prev[1] - curr[1]), 0]); 
+                        echo("dist vector rotated ", vec_rotated_xyz_generic(0, abs(prev[1] - curr[1]), 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i])); 
+                        test = vec_rotated_xyz_generic(0, abs(prev[1] - curr[1]), 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]);
+                        echo("dist vector rotated ", curr + (abs(prev[1] - curr[1])/test[1]) * test); 
+
+
+                        // translate(curr )
+                        translate(curr + (abs(prev[1] - curr[1])/test[1]) * test)
+                            color("pink")
+                            cube([1, 1, 1]);
+                                                
+
+
+                    }
+
+                }
+
+            }
 
             for (j = [0:2]) {
                 // individual keys in column
@@ -114,6 +206,10 @@ module main_keys(
                                         next_key_translate(j-1, col_pitches, initial_translate, roll_angles[i], yaw_angles[i], plate2cap_dist, [row_padding[0][i], row_padding[1][i]]) :
                                         [] // not used when j == 0
                 ){
+
+                    // if (i == 0 && j == 2){
+                    //         top_sub_box(pitch_angles[2][i], roll_angles[i], yaw_angles[i], current_translate, spacing_y, key_module_height);
+                    // }
 
                     if (!(i == 5 && j >= last_col_key_count)) { // to allow for 2 and 1 key last column
                         translate(current_translate)
@@ -160,7 +256,6 @@ module main_keys(
                                             // ]
                                 );
                         }
-
                     }
                 }
             }

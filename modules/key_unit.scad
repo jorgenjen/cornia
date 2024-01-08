@@ -235,6 +235,19 @@ function vec_rotated_xyz(x, y, z, rotation_x, rotation_y, rotation_z) =
         + compute_translate_z_xyz(rotation_x, rotation_y, rotation_z)
     ];
 
+function vec_rotated_xyz_generic(x, y, z, rotation_x, rotation_y, rotation_z) = 
+    [
+        x*cos(rotation_z)*cos(rotation_y) +
+        y*(cos(rotation_z)*sin(rotation_y)*sin(rotation_x) - sin(rotation_z)*cos(rotation_x)) + 
+        z*(cos(rotation_z)*sin(rotation_y)*cos(rotation_x) + sin(rotation_z)*sin(rotation_x))
+        ,
+        x*sin(rotation_z)*cos(rotation_y) +
+        y*(sin(rotation_z)*sin(rotation_y)*sin(rotation_x) + cos(rotation_z)*cos(rotation_x)) +
+        z*(sin(rotation_z)*sin(rotation_y)*cos(rotation_x) - cos(rotation_z)*sin(rotation_x))
+        ,
+        -x*sin(rotation_y) + y*cos(rotation_y)*sin(rotation_x) + z*cos(rotation_y)*cos(rotation_x)
+        // + compute_translate_z_xyz(rotation_x, rotation_y, rotation_z)
+    ];
 
 
 // computes next key translate based on previous translates recursively

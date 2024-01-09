@@ -91,11 +91,25 @@ module main_keys(
     // WORK IN PROGRESS -- continue later does not work atm
     function aligned_translate(prev, curr, i) = 
         let(test = vec_rotated_xyz_generic(0, abs(prev[1] - curr[1]), 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
-        // echo("test", test)
-        // test;
         curr[1] - prev[1] > 0 
             ? prev + (abs(prev[1] - curr[1])/test[1]) * test // prev translate
             : curr + (abs(prev[1] - curr[1])/test[1]) * test; // curr translate
+
+
+
+
+
+    function aligned_translate_update(y, z, prev_initial_translate, initial_translate, i, for_prev) = 
+        let(
+            prev = prev_initial_translate + vec_rotated_xyz(spacing_x, y, z, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]),
+            curr = initial_translate + vec_rotated_xyz(0, y, z, pitch_angles[0][i], roll_angles[i], yaw_angles[i]),
+            edge_translate = for_prev 
+                                ? vec_rotated_xyz_generic(0, abs(prev[1] - curr[1]), 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]) // previous col
+                                : vec_rotated_xyz_generic(0, abs(prev[1] - curr[1]), 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i])       // current col
+        )
+        curr[1] - prev[1] > 0 
+            ? prev + (abs(prev[1] - curr[1])/edge_translate[1]) * edge_translate // prev translate
+            : curr + (abs(prev[1] - curr[1])/edge_translate[1]) * edge_translate; // curr translate
 
 
     col_count = last_col_key_count == 0 ? 4 : 5;
@@ -157,12 +171,22 @@ module main_keys(
                     // translate(vec_rotated_xyz(0, 0, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
                     // translate(initial_translate + vec_rotated_xyz(0, 0, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
                     if (curr[1] - prev[1] > 0) { // current col is higer up (y value) than the previous
+                        echo("veccy deccy succky bucky yeah", aligned_translate_update(0, key_module_height, prev_initial_translate, initial_translate, i, true));
+                        // function aligned_translate_update(y, z, prev_initial_translate, initial_translate, i, for_prev) = 
+                        translate(aligned_translate_update(0, key_module_height, prev_initial_translate, initial_translate, i, true))
+                        // translate(aligned_translate(prev, curr, i-1))
+                            color("indigo")
+                            cube([1, 1, 1]);
+
+
                         translate(curr)
                             cube([1, 1, 1]);
 
-                        translate(aligned_translate(prev, curr, i-1))
-                            color("indigo")
+
+                        // top cubes
+                        translate(curr)
                             cube([1, 1, 1]);
+
                     }
                     else { // current col is lower down (y value) than the previous
                         translate(prev)

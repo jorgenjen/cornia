@@ -87,6 +87,17 @@ module main_keys(
     // translate([next_col_x_translate(0, 5, 0) + vec_rotated_xyz(0, 0, key_module_height, pitch_angles[0][5], roll_angles[5], yaw_angles[5])[0], -200, -200])
     //     cube([0.00001, 400, 400]);
 
+
+    // WORK IN PROGRESS -- continue later does not work atm
+    function aligned_translate(prev, curr, i) = 
+        let(test = vec_rotated_xyz_generic(0, abs(prev[1] - curr[1]), 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
+        // echo("test", test)
+        // test;
+        curr[1] - prev[1] > 0 
+            ? prev + (abs(prev[1] - curr[1])/test[1]) * test // prev translate
+            : curr + (abs(prev[1] - curr[1])/test[1]) * test; // curr translate
+
+
     col_count = last_col_key_count == 0 ? 4 : 5;
     for (i = [0:col_count]) {
         // columns
@@ -118,10 +129,6 @@ module main_keys(
             // cube behind and on top of each column
 
 
-            // WORK IN PROGRESS -- continue later does not work atm
-            // function aligned_vector() = 
-            //             let(test = vec_rotated_xyz_generic(0, abs(prev[1] - curr[1]), 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i])){
-            //             curr + (abs(prev[1] - curr[1])/test[1]) * test;
                 
 
             if (i == 5){
@@ -150,43 +157,19 @@ module main_keys(
                     // translate(vec_rotated_xyz(0, 0, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
                     // translate(initial_translate + vec_rotated_xyz(0, 0, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
                     if (curr[1] - prev[1] > 0) { // current col is higer up (y value) than the previous
-                        echo("Vec curr", curr);
                         translate(curr)
                             cube([1, 1, 1]);
 
-
-                        // translate(prev_initial_translate + vec_rotated_xyz(spacing_x, 5, 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))
-                        // echo("vec prev", prev_initial_translate + vec_rotated_xyz(spacing_x, curr[1] - prev[1], 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]));
-                        echo("Vecccy deccy", prev_initial_translate + vec_rotated_xyz(spacing_x, abs(prev[1] - curr[1])/cos(abs(pitch_angles[0][i-1])), 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))
-                        // echo("This shit", prev);
-                        // translate(prev_initial_translate + vec_rotated_xyz(spacing_x, curr[1] - prev[1], 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))
-                        // translate(prev_initial_translate + vec_rotated_xyz(spacing_x, curr[1], 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))
-                        translate(prev_initial_translate + vec_rotated_xyz(spacing_x, abs(prev[1] - curr[1])/cos(abs(pitch_angles[0][i-1])), 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))
+                        translate(aligned_translate(prev, curr, i-1))
                             color("indigo")
                             cube([1, 1, 1]);
                     }
                     else { // current col is lower down (y value) than the previous
-                        echo("vec prev", prev);
                         translate(prev)
                             cube([1, 1, 1]);
 
 
-                        // translate(prev_initial_translate + vec_rotated_xyz(spacing_x, 5, 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))
-                        echo("aligned vec current", initial_translate + vec_rotated_xyz(0, abs(prev[1] - curr[1])/cos(abs(pitch_angles[0][i])), 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]));
-                        translate([-0.5, 0, 0])
-                        translate(initial_translate + vec_rotated_xyz(0, abs(prev[1] - curr[1])/cos(abs(pitch_angles[0][i])), 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
-                            color("indigo")
-                            cube([1, 1, 1]);
-
-
-                        echo("dist vector ", [0, abs(prev[1] - curr[1]), 0]); 
-                        echo("dist vector rotated ", vec_rotated_xyz_generic(0, abs(prev[1] - curr[1]), 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i])); 
-                        test = vec_rotated_xyz_generic(0, abs(prev[1] - curr[1]), 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]);
-                        echo("dist vector rotated ", curr + (abs(prev[1] - curr[1])/test[1]) * test); 
-
-
-                        // translate(curr )
-                        translate(curr + (abs(prev[1] - curr[1])/test[1]) * test)
+                       translate(aligned_translate(prev, curr, i))
                             color("pink")
                             cube([1, 1, 1]);
                                                 

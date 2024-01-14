@@ -99,17 +99,104 @@ module main_keys(
 
 
 
-    function aligned_translate_update(y, z, prev_initial_translate, initial_translate, i, for_prev) = 
+    function aligned_translate_bottom(z, initial_translate, prev_initial_translate, i, for_prev) = 
+    // function aligned_translate_update(z, prev_initial_translate, initial_translate, i, for_prev) = 
         let(
-            prev = prev_initial_translate + vec_rotated_xyz(spacing_x, y, z, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]),
-            curr = initial_translate + vec_rotated_xyz(0, y, z, pitch_angles[0][i], roll_angles[i], yaw_angles[i]),
-            edge_translate = for_prev 
-                                ? vec_rotated_xyz_generic(0, abs(prev[1] - curr[1]), 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]) // previous col
-                                : vec_rotated_xyz_generic(0, abs(prev[1] - curr[1]), 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i])       // current col
+            prev = prev_initial_translate + vec_rotated_xyz(spacing_x, 0, z, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]),
+            curr = initial_translate + vec_rotated_xyz(0, 0, z, pitch_angles[0][i], roll_angles[i], yaw_angles[i]),
+            edge_translate = curr[1] - prev[1] > 0 
+                                ? for_prev ? vec_rotated_xyz_generic(0, abs(prev[1] - curr[1]), 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]) : [0, 0, 0] // previous col
+                                : !for_prev ? vec_rotated_xyz_generic(0, abs(prev[1] - curr[1]), 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]) : [0, 0, 0],      // current col
+            edge_translate_scaled = edge_translate[1] == 0 ? edge_translate : (abs(prev[1] - curr[1])/edge_translate[1]) * edge_translate 
         )
-        curr[1] - prev[1] > 0 
-            ? prev + (abs(prev[1] - curr[1])/edge_translate[1]) * edge_translate // prev translate
-            : curr + (abs(prev[1] - curr[1])/edge_translate[1]) * edge_translate; // curr translate
+        for_prev 
+            ? prev + edge_translate_scaled 
+            : curr + edge_translate_scaled;
+
+
+    module column_gap_filler(i, j, initial_translate, prev_initial_translate) {
+        // let (
+        //         prev = prev_initial_translate + vec_rotated_xyz(spacing_x, 0, 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]),
+        //         curr = initial_translate + vec_rotated_xyz(0, 0, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i])
+        // ){
+
+
+            if (j == 0) {
+                // bottom row -- no need to account for row filler
+
+                // echo("prev", prev_initial_translate);
+
+                translate(aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, true))
+                    cube([1, 1, 1]);
+
+                translate(aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, false))
+                    cube([1, 1, 1]);
+                           
+                translate(aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true))
+                    cube([1, 1, 1]);
+
+                translate(aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false))
+                    cube([1, 1, 1]);
+
+
+                translate([-0.5, 0, 0])
+                translate(initial_translate + vec_rotated_xyz(0, spacing_y, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
+                    cube([1, 1, 1]);
+
+                // translate(prev_initial_translate + vec_rotated_xyz(spacing_x, 0, 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1])
+                //     cube([1, 1, 1]);
+
+                polyhedron(
+                        points = [
+                            // rear points
+                            aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false),                 // bottom right back
+                            aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true),                  // bottom left back
+                            aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, false), // top right back
+                            aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, true),  // top left back
+
+                            // front points
+                            initial_translate + vec_rotated_xyz(0, spacing_y, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]),                                    // bottom right front
+                            prev_initial_translate + vec_rotated_xyz(spacing_x, spacing_y, 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]),                 // bottom left front
+                            initial_translate + vec_rotated_xyz(0, spacing_y, key_module_height, pitch_angles[0][i], roll_angles[i], yaw_angles[i]),                    // top right front
+                            prev_initial_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]), // top left front
+
+                        ],
+
+                        // faces =  
+                        // [[0,1,2,3], // back 
+                        //  [2,3,7,6], // top 
+                        //  [7,6,5,4], // front 
+                        //  [6,4,2,0], // right 
+                        //  [0,1,5,4], // bottom  
+                        //  [7,4,0,3]] // left 
+
+
+                    faces = [
+                        [0, 1, 2, 3],  // back
+                        [6, 7, 4, 5],  // top (changed order for consistency)
+                        [7, 6, 2, 3],  // front (changed order for consistency)
+                        [4, 5, 1, 0],  // right (changed order for consistency)
+                        [0, 1, 5, 4],  // bottom
+                        [3, 2, 6, 7]   // left (changed order for consistency)
+                    ]
+                );
+                // [[0,1,2,3],  // bottom -- top of prev key
+                //  [4,5,1,0],  // back   -- back side (hotswap side)
+                //  [7,6,5,4],  // top    -- bottom of current key
+                //  [5,6,2,1],  // right  -- towards next column to right
+                //  [6,7,3,2],  // front  -- front of case (where switchs are placed what you see top of desk)
+                //  [7,4,0,3]]  // left   -- towards prev column to left
+        
+            } else {
+                // middle and top row -- account for row filler that combines to lower row
+                                        
+            }
+
+        // }
+            
+
+    }
+
 
 
     col_count = last_col_key_count == 0 ? 4 : 5;
@@ -145,7 +232,7 @@ module main_keys(
 
                 
 
-            if (i == 5){
+            if (i == 1){
                     // translate(vec_rotated_xyz_generic(0, 50, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
                     //     cube([1, 1, 1]);
                     
@@ -171,31 +258,36 @@ module main_keys(
                     // translate(vec_rotated_xyz(0, 0, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
                     // translate(initial_translate + vec_rotated_xyz(0, 0, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
                     if (curr[1] - prev[1] > 0) { // current col is higer up (y value) than the previous
-                        echo("veccy deccy succky bucky yeah", aligned_translate_update(0, key_module_height, prev_initial_translate, initial_translate, i, true));
+                        // echo("veccy deccy succky bucky yeah", aligned_translate_update(key_module_height, prev_initial_translate, initial_translate, i, true));
                         // function aligned_translate_update(y, z, prev_initial_translate, initial_translate, i, for_prev) = 
-                        translate(aligned_translate_update(0, key_module_height, prev_initial_translate, initial_translate, i, true))
+                        // echo("text", aligned_translate_update(0, prev_initial_translate, initial_translate, i, true));
+                        // translate(aligned_translate_update(0, prev_initial_translate, initial_translate, i, true))
                         // translate(aligned_translate(prev, curr, i-1))
-                            color("indigo")
-                            cube([1, 1, 1]);
+                            // color("indigo")
+                            // cube([1, 1, 1]);
 
 
-                        translate(curr)
-                            cube([1, 1, 1]);
+                        
+                        echo("Currrrrrrrrr", curr);
+                        // translate(curr)
+                            // cube([1, 1, 1]);
 
+            column_gap_filler(i, 0, initial_translate, prev_initial_translate);
 
                         // top cubes
-                        translate(curr)
-                            cube([1, 1, 1]);
+                        // translate(curr)
+                            // cube([1, 1, 1]);
 
                     }
                     else { // current col is lower down (y value) than the previous
-                        translate(prev)
-                            cube([1, 1, 1]);
+                        echo("prevv", prev);
+                        // translate(prev)
+                            // cube([1, 1, 1]);
 
-
-                       translate(aligned_translate(prev, curr, i))
-                            color("pink")
-                            cube([1, 1, 1]);
+                        // echo("curr", aligned_translate(prev, curr, i));
+                       // translate(aligned_translate(prev, curr, i))
+                            // color("pink")
+                            // cube([1, 1, 1]);
                                                 
 
 

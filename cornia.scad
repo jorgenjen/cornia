@@ -1,5 +1,5 @@
 use <modules/key_unit.scad>
-use <modules/column_gap_filler_methods.scad>
+// use <modules/column_gap_filler_methods.scad>
 
 /* Creates the key grid/well the keys used by all fingers besides the thumb 
     * stagger: stagger of the key columns -- offset along y-axis where each column starts at the bottom [list]
@@ -126,15 +126,20 @@ module main_keys(
 
                 // echo("prev", prev_initial_translate);
 
+                echo("Top left back", aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, true));
                 translate(aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, true))
                     cube([1, 1, 1]);
 
+                echo("Top right back", aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, false));
                 translate(aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, false))
                     cube([1, 1, 1]);
                            
+                echo("Bottom left back", aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true));
                 translate(aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true))
                     cube([1, 1, 1]);
 
+
+                echo("Bottom right back", aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false));
                 translate(aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false))
                     cube([1, 1, 1]);
 
@@ -148,6 +153,16 @@ module main_keys(
 
                 polyhedron(
                         points = [
+                            // naming description assumes keyboard placed flat on a desk in normal user orientation
+                                // top is the side facing up along they key caps (towards ceiling)
+                                // bottom is the side facing down along the key caps (towards floor)
+                                // --
+                                // right is the side facing right 
+                                // left is the side facing left 
+                                // --
+                                // back is towards the user using the keyboard (against their belly)
+                                // front is side facing away from the user (towards monitor/wall)
+
                             // rear points
                             aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false),                 // bottom right back
                             aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true),                  // bottom left back
@@ -162,31 +177,19 @@ module main_keys(
 
                         ],
 
-                        // faces =  
-                        // [[0,1,2,3], // back 
-                        //  [2,3,7,6], // top 
-                        //  [7,6,5,4], // front 
-                        //  [6,4,2,0], // right 
-                        //  [0,1,5,4], // bottom  
-                        //  [7,4,0,3]] // left 
-
-
-                    faces = [
-                        [0, 1, 2, 3],  // back
-                        [6, 7, 4, 5],  // top (changed order for consistency)
-                        [7, 6, 2, 3],  // front (changed order for consistency)
-                        [4, 5, 1, 0],  // right (changed order for consistency)
-                        [0, 1, 5, 4],  // bottom
-                        [3, 2, 6, 7]   // left (changed order for consistency)
-                    ]
+                        // remember right hand rule when assigning points to faces. 
+                        // (thumb into the face and points must follow the curve of your fingers in space
+                        // you go around in a circle for each face and you must follow the curve direction of your fingers
+                        // when pointing them into the face to know the correct indecie to use for that corner)
+                            // [See documentation on polyhedron on openscad wiki]
+                        faces = 
+                            [[0, 4, 5, 1], // bottom
+                             [2, 3, 7, 6], // top
+                             [0, 1, 3, 2], // back
+                             [1, 5, 7, 3], // right
+                             [4, 6, 7, 5], // front
+                             [0, 2, 6, 4]] // left
                 );
-                // [[0,1,2,3],  // bottom -- top of prev key
-                //  [4,5,1,0],  // back   -- back side (hotswap side)
-                //  [7,6,5,4],  // top    -- bottom of current key
-                //  [5,6,2,1],  // right  -- towards next column to right
-                //  [6,7,3,2],  // front  -- front of case (where switchs are placed what you see top of desk)
-                //  [7,4,0,3]]  // left   -- towards prev column to left
-        
             } else {
                 // middle and top row -- account for row filler that combines to lower row
                                         

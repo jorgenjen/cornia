@@ -32,7 +32,7 @@ module main_keys(
         yaw_angles = [0, 0, 0, 0, -5, -5],                         
         column_padding = [5, 0, -1, 0, 0],    // distance between each column (can be negative)
         row_padding = [                         // individual padding for each row in each column (can be negative)
-                        [0, 0, 0, 0, 0, 0],         // between bottom and middle row in column
+                        [0, 0, 0, -2, 0, 0],         // between bottom and middle row in column
                         [0, 0, 0, 0, 0, 0]          // between middle and top row in column
                       ],
         last_col_key_count = 2,
@@ -345,13 +345,13 @@ module main_keys(
                     if (!(i == 5 && j >= last_col_key_count)) { // to allow for 2 and 1 key last column
                         // colors used to show the column interference between keycaps different colors for clarity
                         let (colors = [ 
-                                        [0.7, 0.4, 0.6, 0.4],
-                                        [0.2, 0.5, 0.5, 0.4],
-                                        [0.9, 0.2, 0.4, 0.4],
-                                        [0.5, 0.8, 0.2, 0.4],
-                                        [0.9, 0.5, 0.4, 0.4],
-                                        [0.8, 0.2, 0.6, 0.4],
-                                        [0.8, 0.9, 0.6, 0.4]
+                                        [0.7+0.05*j, 0.4-0.1*j, 0.6, 0.5 - 0.1*j],
+                                        [0.2+0.05*j, 0.5-0.1*j, 0.5, 0.5 - 0.1*j],
+                                        [0.9+0.05*j, 0.2-0.1*j, 0.4, 0.5 - 0.1*j],
+                                        [0.5+0.05*j, 0.8-0.1*j, 0.2, 0.5 - 0.1*j],
+                                        [0.9+0.05*j, 0.5-0.1*j, 0.4, 0.5 - 0.1*j],
+                                        [0.8+0.05*j, 0.2-0.1*j, 0.6, 0.5 - 0.1*j],
+                                        [0.8+0.05*j, 0.9-0.1*j, 0.6, 0.5 - 0.1*j]
                                       ]
                             ){
                             translate(current_translate)

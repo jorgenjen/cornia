@@ -156,12 +156,21 @@ module centered_key(
         rotation_x = 0,             // rotation around the z-axis (e.g, for splay of columns)                              / rotation of the xy plane so normal 2D rotation around z-axis (e.g, for splay of columns)
         rotation_y = 0,             // rotation around the y-axis (e.g, for curving keys in or outwards for side sclupting)
         rotation_z = 0,             // rotation around the x-axis (e.g, for creating key wells)
+        plate2cap_dist = 7.3,  // height from plate to top of keycap
+        show_keycap = false,        // used to add the keycap for visual information but should not be used when getting the STL
+        keycap_color = [0.9, 0.4, 0.7, 0.4], 
         ){
-
+    // union(){
 
     translate([0, 0, compute_translate_z_xyz(rotation_x, rotation_y, rotation_z)])
     rotate([rotation_x, rotation_y, rotation_z])
     // color("orange")
+    union(){
+        if ( show_keycap){
+            color(keycap_color)
+                translate([0, 0, 5.2])
+                cube([18, 17, plate2cap_dist]);
+        }
     translate([-1, 0, 0])
         union(){
             difference(){
@@ -183,7 +192,9 @@ module centered_key(
             }
             translate([18, 0, 0])
                 cube([1, 17, 5.2]);
+
         }
+    }
 }
 
 
@@ -252,13 +263,13 @@ function vec_rotated_xyz_generic(x, y, z, rotation_x, rotation_y, rotation_z) =
 
 // computes next key translate based on previous translates recursively
 //     used to build up the columns from bottom up
-function next_key_translate(col_pos, col_pitches, initial_translate, roll, yaw, plate2switch_height, padding) =
+function next_key_translate(col_pos, col_pitches, initial_translate, roll, yaw, plate2cap_dist, padding) =
     col_pos == 0 ?
         initial_translate
     :
-    next_key_translate(col_pos - 1, col_pitches, initial_translate, roll, yaw, plate2switch_height, padding) + 
-    vec_rotated_xyz(0, 17, 5.2 + plate2switch_height, col_pitches[col_pos - 1], roll, yaw) -
-    vec_rotated_xyz(0, 0, 5.2 + plate2switch_height, col_pitches[col_pos], roll, yaw) + 
+    next_key_translate(col_pos - 1, col_pitches, initial_translate, roll, yaw, plate2cap_dist, padding) + 
+    vec_rotated_xyz(0, 17, 5.2 + plate2cap_dist, col_pitches[col_pos - 1], roll, yaw) -
+    vec_rotated_xyz(0, 0, 5.2 + plate2cap_dist, col_pitches[col_pos], roll, yaw) + 
     [0, padding[col_pos-1], 0] // padding between each key in column (row_padding)
     ;
         
@@ -342,7 +353,7 @@ translate([0, 0, -0.01])
 
 // transparent cubes illustrates the space taken by the switch and keycap when placed in the socket
 // in reality they are smaller in widht and height but follows the spacing of 18x17
-plate2switch_height = 7.3;
+plate2cap_dist = 7.3;
 pitch_back = -20;
 pitch_middle = 10;
 pitch_front = 55; 
@@ -356,33 +367,33 @@ back_key_translate = [0, 0, 0];
 translate([50, 0, 0])
 union() {
     // back key
-    translate(next_key_translate(0, [pitch_back, pitch_middle, pitch_front], back_key_translate, roll, yaw, plate2switch_height))
+    translate(next_key_translate(0, [pitch_back, pitch_middle, pitch_front], back_key_translate, roll, yaw, plate2cap_dist))
     union() {
         color([0.7, 0.1, 0.9, 0.5])
         translate(vec_rotated_xyz(0, 0, 5.2, pitch_back, roll, yaw))
         rotate([pitch_back, roll, yaw])
-            cube([18, 17, plate2switch_height]);
+            cube([18, 17, plate2cap_dist]);
         centered_key(rotation_x=pitch_back, rotation_y=roll, rotation_z=yaw);
     }
 
     // middle key
-    translate(next_key_translate(1, [pitch_back, pitch_middle, pitch_front], back_key_translate, roll, yaw, plate2switch_height))
+    translate(next_key_translate(1, [pitch_back, pitch_middle, pitch_front], back_key_translate, roll, yaw, plate2cap_dist))
         union() {
             color([0.9, 0.9, 0.9, 0.5])
             translate(vec_rotated_xyz(0, 0, 5.2, pitch_middle, roll, yaw))
             rotate([pitch_middle, roll, yaw])
-                cube([18, 17, plate2switch_height]);
+                cube([18, 17, plate2cap_dist]);
             centered_key(rotation_x=pitch_middle, rotation_y=roll, rotation_z=yaw);
         }
 
 
     // front key
-    translate(next_key_translate(2, [pitch_back, pitch_middle, pitch_front], back_key_translate, roll, yaw, plate2switch_height))
+    translate(next_key_translate(2, [pitch_back, pitch_middle, pitch_front], back_key_translate, roll, yaw, plate2cap_dist))
         union() {
             color([0.2, 0.7, 0.4, 0.5])
             translate(vec_rotated_xyz(0, 0, 5.2, pitch_front, roll, yaw))
             rotate([pitch_front, roll, yaw])
-                cube([18, 17, plate2switch_height]);
+                cube([18, 17, plate2cap_dist]);
             centered_key(rotation_x=pitch_front, rotation_y=roll, rotation_z=yaw);
         }
 

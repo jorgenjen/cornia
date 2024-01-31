@@ -20,7 +20,7 @@ use <modules/key_unit.scad>
 module main_keys(
         stagger = [0, 2, 8, 3, -7, -7],                            
         // well_depth = [5, 5, 0, 5, 5, 14],                            
-        well_depth = [0, 0, 0, 0, 0, 8.1],                            
+        well_depth = [0, 0, 0, 0, 8, 8.1],                            
         roll_angles = [10, 0, 0, -8, -22, -42],
         pitch_angles = [
                         // [0, 0, 0, 0, 0, 0],              
@@ -30,16 +30,17 @@ module main_keys(
                         // [0, 0, 0, 0, 0, 0],                 
                        ], //[for (i = [0: 2]) [for (j = [0:5]) 0]],      
         yaw_angles = [0, 0, 0, 0, -5, -5],                         
-        column_padding = [5, 0, -1, 0, 2],    // distance between each column (can be negative)
+        column_padding = [5, 0, -1, 0, 0],    // distance between each column (can be negative)
         row_padding = [                         // individual padding for each row in each column (can be negative)
-                        [0, 0, 2, 0, 0, 0],         // between bottom and middle row in column
-                        [0, 0, 0, 0, 3, 0]          // between middle and top row in column
+                        [0, 0, 0, 0, 0, 0],         // between bottom and middle row in column
+                        [0, 0, 0, 0, 0, 0]          // between middle and top row in column
                       ],
         last_col_key_count = 2,
         spacing_x = 18,
         spacing_y = 17,
         key_module_height = 5.2,
         plate2cap_dist = 7.3,
+        show_keycap = false, // used to visualise keycap for showing if there are any overlaps
     ){
 
     // - vec_rotated_xyz(0, 0, key_module_height, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])[0]
@@ -121,47 +122,65 @@ module main_keys(
         // ){
 
 
-            if (j == 0) {
-                // bottom row -- no need to account for row filler
+            if (i != 0) {
+                if (j == 0) {
+                    // bottom row -- no need to account for row filler
 
-                // echo("prev", prev_initial_translate);
+                    // echo("prev", prev_initial_translate);
 
-                echo("Top left back", aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, true));
-                translate(aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, true))
-                    cube([1, 1, 1]);
+                    echo("Top left back", aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, true));
+                    translate(aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, true))
+                        cube([1, 1, 1]);
 
-                echo("Top right back", aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, false));
-                translate(aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, false))
-                    cube([1, 1, 1]);
-                           
-                echo("Bottom left back", aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true));
-                translate(aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true))
-                    cube([1, 1, 1]);
+                    echo("Top right back", aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, false));
+                    translate(aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, false))
+                        cube([1, 1, 1]);
 
-
-                echo("Bottom right back", aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false));
-                translate(aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false))
-                    cube([1, 1, 1]);
+                    echo("Bottom left back", aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true));
+                    translate(aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true))
+                        cube([1, 1, 1]);
 
 
-                translate([-0.5, 0, 0])
-                translate(initial_translate + vec_rotated_xyz(0, spacing_y, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
-                    cube([1, 1, 1]);
+                    echo("Bottom right back", aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false));
+                    translate(aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false))
+                        cube([1, 1, 1]);
 
-                // translate(prev_initial_translate + vec_rotated_xyz(spacing_x, 0, 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1])
-                //     cube([1, 1, 1]);
 
-                polyhedron(
-                        points = [
+                    translate([-0.5, 0, 0])
+                        translate(initial_translate + vec_rotated_xyz(0, spacing_y, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
+                        cube([1, 1, 1]);
+
+                    // translate(prev_initial_translate + vec_rotated_xyz(spacing_x, 0, 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1])
+                    //     cube([1, 1, 1]);
+
+                    // if (
+                    //      // bottom right back x-value > bottom right back x-value
+                    //      aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false)[0] > 
+                    //      aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true)[0]
+                    //      &&
+                    //      // top right back x-value > top left back x-value
+                    //      aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, true)[0] > 
+                    //      aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, false)[0]
+                    //      &&
+                    //      // bottom rigth front x-value > bottom left front x-value
+                    //      (initial_translate + vec_rotated_xyz(0, spacing_y, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))[0] > 
+                    //      (prev_initial_translate + vec_rotated_xyz(spacing_x, spacing_y, 0, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))[0]
+                    //      &&
+                    //      // top right front x-value > top left front x-value
+                    //      (initial_translate + vec_rotated_xyz(0, spacing_y, key_module_height, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))[0] > 
+                    //      (prev_initial_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))[0]
+                    // ){ 
+                    polyhedron(
+                            points = [
                             // naming description assumes keyboard placed flat on a desk in normal user orientation
-                                // top is the side facing up along they key caps (towards ceiling)
-                                // bottom is the side facing down along the key caps (towards floor)
-                                // --
-                                // right is the side facing right 
-                                // left is the side facing left 
-                                // --
-                                // back is towards the user using the keyboard (against their belly)
-                                // front is side facing away from the user (towards monitor/wall)
+                            // top is the side facing up along they key caps (towards ceiling)
+                            // bottom is the side facing down along the key caps (towards floor)
+                            // --
+                            // right is the side facing right 
+                            // left is the side facing left 
+                            // --
+                            // back is towards the user using the keyboard (against their belly)
+                            // front is side facing away from the user (towards monitor/wall)
 
                             // rear points
                             aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false),                 // bottom right back
@@ -175,29 +194,30 @@ module main_keys(
                             initial_translate + vec_rotated_xyz(0, spacing_y, key_module_height, pitch_angles[0][i], roll_angles[i], yaw_angles[i]),                    // top right front
                             prev_initial_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]), // top left front
 
-                        ],
+                            ],
 
-                        // remember right hand rule when assigning points to faces. 
-                        // (thumb into the face and points must follow the curve of your fingers in space
-                        // you go around in a circle for each face and you must follow the curve direction of your fingers
-                        // when pointing them into the face to know the correct indecie to use for that corner)
+                            // remember right hand rule when assigning points to faces. 
+                            // (thumb into the face and points must follow the curve of your fingers in space
+                            // you go around in a circle for each face and you must follow the curve direction of your fingers
+                            // when pointing them into the face to know the correct indecie to use for that corner)
                             // [See documentation on polyhedron on openscad wiki]
-                        faces = 
-                            [[0, 4, 5, 1], // bottom
-                             [2, 3, 7, 6], // top
-                             [0, 1, 3, 2], // back
-                             [1, 5, 7, 3], // right
-                             [4, 6, 7, 5], // front
-                             [0, 2, 6, 4]] // left
-                );
-            } else {
-                // middle and top row -- account for row filler that combines to lower row
-                                        
-            }
+                            faces = 
+                                [[0, 4, 5, 1], // bottom
+                            [2, 3, 7, 6], // top
+                            [0, 1, 3, 2], // back
+                            [1, 5, 7, 3], // right
+                            [4, 6, 7, 5], // front
+                            [0, 2, 6, 4]] // left
+                                );
+                            // }
+                } else {
+                    // middle and top row -- account for row filler that combines to lower row
+
+                }
 
         // }
             
-
+        }// end of first if that checks if i != 0
     }
 
 
@@ -206,7 +226,7 @@ module main_keys(
     for (i = [0:col_count]) {
         // columns
 
-        // x here must be dynamic based on prev yaw angles (cummulative)
+        // x shift must be dynamic based on prev yaw angles (cummulative)
         let (
                 // initial_translate = [spacing_x * i, stagger[i], well_depth[i]], 
                 initial_translate = [
@@ -235,7 +255,7 @@ module main_keys(
 
                 
 
-            if (i == 1){
+            if (i == 9){
                     // translate(vec_rotated_xyz_generic(0, 50, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
                     //     cube([1, 1, 1]);
                     
@@ -275,7 +295,9 @@ module main_keys(
                         // translate(curr)
                             // cube([1, 1, 1]);
 
-            column_gap_filler(i, 0, initial_translate, prev_initial_translate);
+            if (i != 0){
+                column_gap_filler(i, 0, initial_translate, prev_initial_translate);
+            }
 
                         // top cubes
                         // translate(curr)
@@ -286,7 +308,9 @@ module main_keys(
                         echo("prevv", prev);
                         // translate(prev)
                             // cube([1, 1, 1]);
-
+                        if (i != 0){
+                            column_gap_filler(i, 0, initial_translate, prev_initial_translate);
+                        }
                         // echo("curr", aligned_translate(prev, curr, i));
                        // translate(aligned_translate(prev, curr, i))
                             // color("pink")
@@ -299,6 +323,11 @@ module main_keys(
                 }
 
             }
+
+
+            
+
+
 
             for (j = [0:2]) {
                 // individual keys in column
@@ -314,8 +343,27 @@ module main_keys(
                     // }
 
                     if (!(i == 5 && j >= last_col_key_count)) { // to allow for 2 and 1 key last column
-                        translate(current_translate)
-                            centered_key(rotation_x=pitch_angles[j][i], rotation_y=roll_angles[i], rotation_z=yaw_angles[i]);
+                        // colors used to show the column interference between keycaps different colors for clarity
+                        let (colors = [ 
+                                        [0.7, 0.4, 0.6, 0.4],
+                                        [0.2, 0.5, 0.5, 0.4],
+                                        [0.9, 0.2, 0.4, 0.4],
+                                        [0.5, 0.8, 0.2, 0.4],
+                                        [0.9, 0.5, 0.4, 0.4],
+                                        [0.8, 0.2, 0.6, 0.4],
+                                        [0.8, 0.9, 0.6, 0.4]
+                                      ]
+                            ){
+                            translate(current_translate)
+                                centered_key(
+                                            rotation_x=pitch_angles[j][i], 
+                                            rotation_y=roll_angles[i], 
+                                            rotation_z=yaw_angles[i], 
+                                            plate2cap_dist=plate2cap_dist,
+                                            show_keycap=show_keycap, 
+                                            keycap_color=colors[i]
+                                        );
+                        }
 
                         if (j != 0) {
                             // draw the filler between key j and j-1 (current and previous)
@@ -358,6 +406,9 @@ module main_keys(
                                             // ]
                                 );
                         }
+
+                        column_gap_filler(i, j, initial_translate, prev_initial_translate);
+
                     }
                 }
             }
@@ -365,4 +416,4 @@ module main_keys(
     }
 }
 
-main_keys();
+main_keys(show_keycap=true);

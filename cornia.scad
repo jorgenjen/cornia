@@ -47,7 +47,7 @@ module main_keys(
     // Helper function to find next initial translate of column
     function next_col_x_translate(cur_col_index, col_index, initial_x_translate) =  
         cur_col_index == col_index 
-            ? initial_x_translate - vec_rotated_xyz(0, 0, key_module_height, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])[0]
+            ? initial_x_translate //- vec_rotated_xyz(0, 0, key_module_height, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])[0]
             : cur_col_index == 0 
                 ?  next_col_x_translate( // first column -- same as posetive diff
                             cur_col_index + 1, 
@@ -70,6 +70,65 @@ module main_keys(
                             );
 
 
+    function next_col_x_translate_new(cur_col_index, col_index, initial_x_translate, top_top, top_bottom, bottom_top, bottom_bottom) = 
+        cur_col_index == col_index
+            ? initial_x_translate
+            : cur_col_index == 0
+            // something is wrong here with the top comutation
+                ? let(
+                        initial_translate = [
+                                                initial_x_translate, 
+                                                stagger[cur_col_index], 
+                                                well_depth[cur_col_index]
+                                            ], 
+                            // col_pitches = [for (j = [0:2]) pitch_angles[j][cur_col_index]],
+                        top_col_translate = next_key_translate(2, [for (j = [0:2]) pitch_angles[2][cur_col_index]], initial_translate, roll_angles[cur_col_index],
+                                            yaw_angles[cur_col_index], plate2cap_dist, [row_padding[0][cur_col_index], row_padding[1][cur_col_index]]),
+
+                        // positions used to compute line segments
+                        local_top_top = [5, 5, 5],
+                        local_top_bottom = 42,
+                        local_bottom_top = vec_rotated_xyz(18, 17, key_module_height + plate2cap_dist, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
+                        local_bottom_bottom = vec_rotated_xyz(18, 0, key_module_height + plate2cap_dist, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])
+                     ) 
+                    top_col_translate
+                : 15;
+
+
+
+
+// current_translate = next_key_translate(j, col_pitches, initial_translate, roll_angles[i], yaw_angles[i], plate2cap_dist, [row_padding[0][i], row_padding[1][i]]),
+                
+// function vec_rotated_xyz(x, y, z, rotation_x, rotation_y, rotation_z) =
+
+
+
+
+    // translate([-0.05, -0.05, -0.05])
+    translate(next_col_x_translate_new(0, 1, 0))
+        // cube([0.1, 0.1, 0.1]);
+        cube([1, 1, 1]);
+
+
+    echo(next_col_x_translate_new(0, 1, 0));
+
+        // cur_col_index == col_index
+        //     ? // return the x_translate value 
+        //     : // compute min_translate for top and bottom line segments
+        //         // select the biggest of the two as the translate for this column. 
+        //             // compute the needed x_translate for the point bottom
+              
+
+
+
+
+
+                    // initial location would be prev tranlate and the corresponding pos in cube to find the line segemnt
+
+
+
+
+    // computes the col padding that is user specified by the parameter to the module
     function compute_col_padding (cur_col_index, col_index, cur_col_padding) = 
         cur_col_index == col_index 
             ? cur_col_padding
@@ -78,11 +137,11 @@ module main_keys(
 
     // echo()
     // echo(vec_rotated_xyz(spacing_x, 0, key_module_height, pitch_angles[0][0], roll_angles[0], yaw_angles[0])[0])
-    echo("next_col_translate", next_col_x_translate(0, 2, 0));
+    // echo("next_col_translate", next_col_x_translate(0, 2, 0));
     prev_x_max = 0;
 
 
-    echo("compute_col_padding", compute_col_padding(0, 1, 0));
+    // echo("compute_col_padding", compute_col_padding(0, 1, 0));
     
     // color("indigo")
     // translate([next_col_x_translate(0, 5, 0) + vec_rotated_xyz(0, 0, key_module_height, pitch_angles[0][5], roll_angles[5], yaw_angles[5])[0], -200, -200])
@@ -128,20 +187,20 @@ module main_keys(
 
                     // echo("prev", prev_initial_translate);
 
-                    echo("Top left back", aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, true));
+                    // echo("Top left back", aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, true));
                     translate(aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, true))
                         cube([1, 1, 1]);
 
-                    echo("Top right back", aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, false));
+                    // echo("Top right back", aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, false));
                     translate(aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, false))
                         cube([1, 1, 1]);
 
-                    echo("Bottom left back", aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true));
+                    // echo("Bottom left back", aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true));
                     translate(aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true))
                         cube([1, 1, 1]);
 
 
-                    echo("Bottom right back", aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false));
+                    // echo("Bottom right back", aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false));
                     translate(aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false))
                         cube([1, 1, 1]);
 
@@ -291,7 +350,7 @@ module main_keys(
 
 
                         
-                        echo("Currrrrrrrrr", curr);
+                        // echo("Currrrrrrrrr", curr);
                         // translate(curr)
                             // cube([1, 1, 1]);
 
@@ -305,7 +364,7 @@ module main_keys(
 
                     }
                     else { // current col is lower down (y value) than the previous
-                        echo("prevv", prev);
+                        // echo("prevv", prev);
                         // translate(prev)
                             // cube([1, 1, 1]);
                         if (i != 0){

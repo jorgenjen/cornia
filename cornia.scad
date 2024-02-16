@@ -9,7 +9,7 @@ use <modules/key_unit.scad>
     * yaw_angles: yaw angle of each column -- rotation around the z-axis [list]
     * last_col_key_count: number of keys in the last column -- 0 no column 1/2/3 number of keys in column [int]
     * spacing_x: keycap spacing x -- x-axis [int]
-    * spacing_y: keycap spacing y -- y-axis [int]
+    * spacing_y: keycahttps://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/p spacing y -- y-axis [int]
     * key_module_height: height of the key module -- z-axis [int]
     * plate2cap_dist: distance from the plate to top of keycap -- z-axis [int]
 
@@ -69,42 +69,57 @@ module main_keys(
                             - vec_rotated_xyz(0, 0, key_module_height, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])[0]
                             );
 
-
-    function next_col_x_translate_new(cur_col_index, col_index, initial_x_translate, top_top, top_bottom, bottom_top, bottom_bottom) = 
-        cur_col_index == col_index
-            ? initial_x_translate
-            : true
-            // something is wrong here with the top comutation
-                ? let(
-                        initial_translate = [
-                                                initial_x_translate, 
-                                                stagger[cur_col_index], 
-                                                well_depth[cur_col_index]
-                                            ], 
-                            // col_pitches = [for (j = [0:2]) pitch_angles[j][cur_col_index]],
-                        top_row_translate = next_key_translate(2, [for (j = [0:2]) pitch_angles[j][cur_col_index]], initial_translate, roll_angles[cur_col_index],
-                                            yaw_angles[cur_col_index], plate2cap_dist, [row_padding[0][cur_col_index], row_padding[1][cur_col_index]]),
+    // check if two line segments in xy (2D) plane intersect
+        // a and b are one line segment
+        // c and d are the other line segment
+            // modified from https://openscadsnippetpad.blogspot.com/2017/06/intersection-of-lines.html
+    function  lines_intersect(a, b, c, d)=
+        let(
+                da = [(a.x-b.x),(a.y-b.y)], 
+                db = [(c.x-d.x),(c.y-d.y)],
+                the = da.x*db.y - da.y*db.x                 )
+        (the == 0)
+            ? false
+            : true;
 
 
-                        middle_row_translate = next_key_translate(1, [for (j = [0:2]) pitch_angles[j][cur_col_index]], initial_translate, roll_angles[cur_col_index],
-                                            yaw_angles[cur_col_index], plate2cap_dist, [row_padding[0][cur_col_index], row_padding[1][cur_col_index]]),
+    function next_col_x_translate_new(cur_col_index, col_index, initial_x_translate, top_top, top_bottom, middle_top, middle_bottom, bottom_top, bottom_bottom) = 
+        let(
+            // following 3 variables are just used to compute the current points below them
+            initial_translate = [
+                                    initial_x_translate, 
+                                    stagger[cur_col_index], 
+                                    well_depth[cur_col_index]
+                                ], 
+            top_row_translate = next_key_translate(2, [for (j = [0:2]) pitch_angles[j][cur_col_index]], initial_translate, roll_angles[cur_col_index],
+                                yaw_angles[cur_col_index], plate2cap_dist, [row_padding[0][cur_col_index], row_padding[1][cur_col_index]]),
 
-                        // positions used to compute line segments
-                        local_top_top = top_row_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height+plate2cap_dist, pitch_angles[2][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
-                        local_top_bottom = top_row_translate + vec_rotated_xyz(spacing_x, 0, key_module_height+plate2cap_dist, pitch_angles[2][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
-                        local_middle_top = middle_row_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height+plate2cap_dist, pitch_angles[1][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
-                        local_middle_bottom = middle_row_translate + vec_rotated_xyz(spacing_x, 0, key_module_height+plate2cap_dist, pitch_angles[1][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
-                        local_bottom_top = initial_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height+plate2cap_dist, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
-                        local_bottom_bottom = initial_translate + vec_rotated_xyz(spacing_x, 0, key_module_height+plate2cap_dist, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])
-                     ) 
-                    echo("local_top_top_x", local_top_top.x)
-                    // echo("initil", initial_translate)
-                    // echo("top_row_translate", top_row_translate)
-                    // echo("local_top_bottom", local_top_bottom)
 
-                    // top_row_translate
-                    local_bottom_top
-                : 15;
+            middle_row_translate = next_key_translate(1, [for (j = [0:2]) pitch_angles[j][cur_col_index]], initial_translate, roll_angles[cur_col_index],
+                                yaw_angles[cur_col_index], plate2cap_dist, [row_padding[0][cur_col_index], row_padding[1][cur_col_index]]),
+
+            // positions used to compute line segments (points along right side of keycaps for the current column)
+            cur_top_top = top_row_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height+plate2cap_dist, pitch_angles[2][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
+            cur_top_bottom = top_row_translate + vec_rotated_xyz(spacing_x, 0, key_module_height+plate2cap_dist, pitch_angles[2][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
+            cur_middle_top = middle_row_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height+plate2cap_dist, pitch_angles[1][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
+            cur_middle_bottom = middle_row_translate + vec_rotated_xyz(spacing_x, 0, key_module_height+plate2cap_dist, pitch_angles[1][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
+            cur_bottom_top = initial_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height+plate2cap_dist, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
+            cur_bottom_bottom = initial_translate + vec_rotated_xyz(spacing_x, 0, key_module_height+plate2cap_dist, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])
+        ) 
+            cur_col_index == 0
+                ? col_index == 0 ? 0
+                    : next_col_x_translate_new(1, col_index, initial_x_translate, top_top, top_bottom, middle_top, middle_bottom, bottom_top, bottom_bottom)
+                : // 0 not cur index find max translate from the min translates
+            
+            
+        
+
+            cur_bottom_top;
+
+
+    // function next_col_x_translate_new(cur_col_index, col_index, initial_x_translate) =
+    //     let ( init_point = [0, 0, 0])
+    //         next_col_x_translate_helper(cur_col_index, col_index, initial_x_translate, init_point, init_point, init_point, init_point, init_point, init_point);
 
 
 

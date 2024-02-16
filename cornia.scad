@@ -32,7 +32,7 @@ module main_keys(
         yaw_angles = [0, 0, 0, 0, -5, -5],                         
         column_padding = [5, 0, -1, 0, 0],    // distance between each column (can be negative)
         row_padding = [                         // individual padding for each row in each column (can be negative)
-                        [0, 0, 0, -2, 0, 0],         // between bottom and middle row in column
+                        [5, 0, 0, -2, 0, 0],         // between bottom and middle row in column
                         [0, 0, 0, 0, 0, 0]          // between middle and top row in column
                       ],
         last_col_key_count = 2,
@@ -73,7 +73,7 @@ module main_keys(
     function next_col_x_translate_new(cur_col_index, col_index, initial_x_translate, top_top, top_bottom, bottom_top, bottom_bottom) = 
         cur_col_index == col_index
             ? initial_x_translate
-            : cur_col_index == 0
+            : true
             // something is wrong here with the top comutation
                 ? let(
                         initial_translate = [
@@ -82,16 +82,28 @@ module main_keys(
                                                 well_depth[cur_col_index]
                                             ], 
                             // col_pitches = [for (j = [0:2]) pitch_angles[j][cur_col_index]],
-                        top_col_translate = next_key_translate(2, [for (j = [0:2]) pitch_angles[2][cur_col_index]], initial_translate, roll_angles[cur_col_index],
+                        top_row_translate = next_key_translate(2, [for (j = [0:2]) pitch_angles[j][cur_col_index]], initial_translate, roll_angles[cur_col_index],
+                                            yaw_angles[cur_col_index], plate2cap_dist, [row_padding[0][cur_col_index], row_padding[1][cur_col_index]]),
+
+
+                        middle_row_translate = next_key_translate(1, [for (j = [0:2]) pitch_angles[j][cur_col_index]], initial_translate, roll_angles[cur_col_index],
                                             yaw_angles[cur_col_index], plate2cap_dist, [row_padding[0][cur_col_index], row_padding[1][cur_col_index]]),
 
                         // positions used to compute line segments
-                        local_top_top = [5, 5, 5],
-                        local_top_bottom = 42,
-                        local_bottom_top = vec_rotated_xyz(18, 17, key_module_height + plate2cap_dist, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
-                        local_bottom_bottom = vec_rotated_xyz(18, 0, key_module_height + plate2cap_dist, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])
+                        local_top_top = top_row_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height+plate2cap_dist, pitch_angles[2][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
+                        local_top_bottom = top_row_translate + vec_rotated_xyz(spacing_x, 0, key_module_height+plate2cap_dist, pitch_angles[2][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
+                        local_middle_top = middle_row_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height+plate2cap_dist, pitch_angles[1][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
+                        local_middle_bottom = middle_row_translate + vec_rotated_xyz(spacing_x, 0, key_module_height+plate2cap_dist, pitch_angles[1][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
+                        local_bottom_top = initial_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height+plate2cap_dist, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
+                        local_bottom_bottom = initial_translate + vec_rotated_xyz(spacing_x, 0, key_module_height+plate2cap_dist, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])
                      ) 
-                    top_col_translate
+                    echo("local_top_top_x", local_top_top.x)
+                    // echo("initil", initial_translate)
+                    // echo("top_row_translate", top_row_translate)
+                    // echo("local_top_bottom", local_top_bottom)
+
+                    // top_row_translate
+                    local_bottom_top
                 : 15;
 
 
@@ -107,10 +119,11 @@ module main_keys(
     // translate([-0.05, -0.05, -0.05])
     translate(next_col_x_translate_new(0, 1, 0))
         // cube([0.1, 0.1, 0.1]);
+        color("red")
         cube([1, 1, 1]);
 
 
-    echo(next_col_x_translate_new(0, 1, 0));
+    echo("Next col translate return vec", next_col_x_translate_new(0, 1, 0));
 
         // cur_col_index == col_index
         //     ? // return the x_translate value 
@@ -413,15 +426,38 @@ module main_keys(
                                         [0.8+0.05*j, 0.9-0.1*j, 0.6, 0.5 - 0.1*j]
                                       ]
                             ){
-                            translate(current_translate)
-                                centered_key(
+                            if (i == 0 && j == 2){
+                                echo("key translate");
+                                echo("Initial_translate for center", initial_translate);
+                                echo("current_translate", current_translate);
+
+
+                                translate(current_translate)
+                                    centered_key(
                                             rotation_x=pitch_angles[j][i], 
                                             rotation_y=roll_angles[i], 
                                             rotation_z=yaw_angles[i], 
                                             plate2cap_dist=plate2cap_dist,
                                             show_keycap=show_keycap, 
                                             keycap_color=colors[i]
-                                        );
+                                            );
+
+
+                                // place a cube on the top left corner of this key
+
+                                // translate(current_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height+plate2cap_dist, pitch_angles[j][i], roll_angles[i], yaw_angles[i]))
+                                //     cube([1, 1, 1]);
+                            } else {
+                                translate(current_translate)
+                                    centered_key(
+                                            rotation_x=pitch_angles[j][i], 
+                                            rotation_y=roll_angles[i], 
+                                            rotation_z=yaw_angles[i], 
+                                            plate2cap_dist=plate2cap_dist,
+                                            show_keycap=show_keycap, 
+                                            keycap_color=colors[i]
+                                            );
+                            }
                         }
 
                         if (j != 0) {

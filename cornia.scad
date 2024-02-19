@@ -73,6 +73,7 @@ module main_keys(
         // a and b are one line segment
         // c and d are the other line segment
             // modified from https://openscadsnippetpad.blogspot.com/2017/06/intersection-of-lines.html
+    // NOT NEEDED FOR NOW
     function  lines_intersect(a, b, c, d)=
         let(
                 da = [(a.x-b.x),(a.y-b.y)], 
@@ -83,11 +84,45 @@ module main_keys(
             : true;
 
 
-    function next_col_x_translate_new(cur_col_index, col_index, initial_x_translate, top_top, top_bottom, middle_top, middle_bottom, bottom_top, bottom_bottom) = 
+    // get angle of line sesgment from A to B compared to the x-axis
+    function line_angle(A, B) = 
+        atan2(B.y - A.y, B.x - A.x);
+        
+
+    // returns point with given y-value along line
+    function point_on_line(A, B, y) = 
+        let(
+            m = (B.y - A.y)/(B.x - A.x),
+            x = (y - A.y)/m + A.x
+        )
+        [x, y];
+
+
+
+    // returns true if two line segments has any overlaping parts in y-axis
+        // false otherwise
+    function y_range_overlap(prev_A, prev_B, cur_A, cur_B) = 
+        let(
+            prev_min = min(prev_A.y, prev_B.y),
+            prev_max = max(prev_A.y, prev_B.y),
+            cur_min = min(cur_A.y, cur_B.y),
+            cur_max = max(cur_A.y, cur_B.y)
+        )
+        prev_min <= cur_max && cur_min <= prev_max;
+
+    function min_x_translate(prev_A, prev_B, cur_A, cur_B) = 
+        y_range_overlap(prev_A, prev_B, cur_A, cur_B)
+            ? point_on_line(cur_A, cur_B, min(prev_A.y, prev_B.y))[0]
+            : 0; // no overlap so no translation needed correct this line combo
+
+
+
+
+    function next_col_x_translate_new(cur_col_index, col_index, top_top, top_bottom, middle_top, middle_bottom, bottom_top, bottom_bottom) = 
         let(
             // following 3 variables are just used to compute the current points below them
             initial_translate = [
-                                    initial_x_translate, 
+                                    0, 
                                     stagger[cur_col_index], 
                                     well_depth[cur_col_index]
                                 ], 
@@ -104,17 +139,29 @@ module main_keys(
             cur_middle_top = middle_row_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height+plate2cap_dist, pitch_angles[1][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
             cur_middle_bottom = middle_row_translate + vec_rotated_xyz(spacing_x, 0, key_module_height+plate2cap_dist, pitch_angles[1][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
             cur_bottom_top = initial_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height+plate2cap_dist, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
-            cur_bottom_bottom = initial_translate + vec_rotated_xyz(spacing_x, 0, key_module_height+plate2cap_dist, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index])
+            cur_bottom_bottom = initial_translate + vec_rotated_xyz(spacing_x, 0, key_module_height+plate2cap_dist, pitch_angles[0][cur_col_index], roll_angles[cur_col_index], yaw_angles[cur_col_index]),
+
+
+            // array to store tranlsates for comparisons
+            translates = [10, 15, 3, 7, 50, 9, 1, 2]
         ) 
             cur_col_index == 0
                 ? col_index == 0 ? 0
-                    : next_col_x_translate_new(1, col_index, initial_x_translate, top_top, top_bottom, middle_top, middle_bottom, bottom_top, bottom_bottom)
+                    : next_col_x_translate_new(1, col_index, top_top, top_bottom, middle_top, middle_bottom, bottom_top, bottom_bottom)
                 : // 0 not cur index find max translate from the min translates
             
+            echo("MAX", max(translates))
             
         
 
             cur_bottom_top;
+
+    // echo("Line angle", line_angle([0, 0], [-5, -0.00001]));
+    //
+    // echo("Point on line", point_on_line([0, 0], [-5, 13], -2));
+
+
+
 
 
     // function next_col_x_translate_new(cur_col_index, col_index, initial_x_translate) =

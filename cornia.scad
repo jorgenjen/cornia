@@ -19,15 +19,16 @@ use <modules/key_unit.scad>
 
 module main_keys(stagger = [ 0, 2, 8, 3, -7, -7 ],
                  // well_depth = [5, 5, 0, 5, 5, 14],
-                 well_depth = [ 0, 0, 0, 0, 8, 8.1 ], roll_angles = [ 10, 0, 0, -8, -22, -42 ],
+                 well_depth = [ 12, 8, 0, 2, 8, 14.1 ], 
+                 roll_angles = [ 14, 6, 0, -8, -22, -42 ],
                  pitch_angles =
                      [
-                         // [0, 0, 0, 0, 0, 0],
+                         // [ 0, 0, 0, 0, 0, 0 ],
                          [ -22, -22, -22, -42, -22, -22 ], // bottom row
                          [ 0, 0, 0, 0, 0, 0 ],             // middle row
                          [ 10, 20, 10, 10, 10, 10 ]        // top row
-                                                           // [0, 0, 0, 0, 0, 0],
-                     ],                                    //[for (i = [0: 2]) [for (j = [0:5]) 0]],
+                         // [ 0, 0, 0, 0, 0, 0 ],
+                     ], //[for (i = [0: 2]) [for (j = [0:5]) 0]],
                  yaw_angles = [ 0, 0, 0, 0, -5, -5 ],
                  // column_padding = [5, 0, -1, 0, 0],    // distance between each column (can be negative)
                  column_padding = [ 0, 0, 0, 0, 0 ], // distance between each column (can be negative)
@@ -37,7 +38,11 @@ module main_keys(stagger = [ 0, 2, 8, 3, -7, -7 ],
                          [ 0, 0, 0, 0, 0, 0 ], // between bottom and middle row in column
                          [ 0, 0, 0, 0, 0, 0 ]  // between middle and top row in column
                      ],
-                 last_col_key_count = 2, spacing_x = 18, spacing_y = 17, key_module_height = 5.2, plate2cap_dist = 7.3,
+                 last_col_key_count = 2,
+                 spacing_x = 18,
+                 spacing_y = 17,
+                 key_module_height = 5.2,
+                 plate2cap_dist = 7.3,
                  show_keycap = false, // used to visualise keycap for showing if there are any overlaps
 )
 {
@@ -87,6 +92,7 @@ module main_keys(stagger = [ 0, 2, 8, 3, -7, -7 ],
 
     // returns point with given y-value along line
     function point_on_line(A, B, y) = let(m = (B.y - A.y) / (B.x - A.x), x = (y - A.y) / m + A.x)[x, y];
+    function x_on_line_at_y(A, B, y) = A.y == B.y ? max(A.x, B.x) : A.x + (y - A.y) * (B.x - A.x) / (B.y - A.y);
 
     // returns true if two line segments has any overlaping parts in y-axis
     // false otherwise
@@ -97,122 +103,79 @@ module main_keys(stagger = [ 0, 2, 8, 3, -7, -7 ],
             prev_min <= cur_max &&
         cur_min <= prev_max;
 
-    // minimum x traslate needed between two line segments
+    // minimum x translate needed so cur segment is not left of prev segment
     function min_x_translate(prev_A, prev_B, cur_A, cur_B) =
         y_range_overlap(prev_A, prev_B, cur_A, cur_B)
-            ? point_on_line(cur_A, cur_B, min(prev_A.y, prev_B.y))[0] // min translate needed between the two lines
-            : 0; // no overlap so no translation needed correct this line combo
+            ? let(overlap_min = max(min(prev_A.y, prev_B.y), min(cur_A.y, cur_B.y)),
+                  overlap_max = min(max(prev_A.y, prev_B.y), max(cur_A.y, cur_B.y)),
+                  min_translate_at_start = x_on_line_at_y(prev_A, prev_B, overlap_min) -
+                                           x_on_line_at_y(cur_A, cur_B, overlap_min),
+                  min_translate_at_end = x_on_line_at_y(prev_A, prev_B, overlap_max) -
+                                         x_on_line_at_y(cur_A, cur_B, overlap_max))
+                  max(min_translate_at_start, min_translate_at_end)
+            : 0;
 
-    function next_col_x_translate_new(cur_col_index, col_index, top_top, top_bottom, middle_top, middle_bottom,
-                                      bottom_top, bottom_bottom, accumulated_min_x_translate) =
-        let(
-            // following 3 variables are just used to compute the current points below them
-            initial_translate = [ 0, stagger[cur_col_index], well_depth[cur_col_index] ],
-            top_row_translate =
-                next_key_translate(2, [for (j = [0:2]) pitch_angles[j][cur_col_index]], initial_translate,
-                                   roll_angles[cur_col_index], yaw_angles[cur_col_index], plate2cap_dist,
-                                   [ row_padding[0][cur_col_index], row_padding[1][cur_col_index] ]),
+    function row_translate(row_index, col_index, initial_translate) =
+        next_key_translate(row_index, [for (j = [0:2]) pitch_angles[j][col_index]], initial_translate,
+                           roll_angles[col_index], yaw_angles[col_index], plate2cap_dist,
+                           [ row_padding[0][col_index], row_padding[1][col_index] ]);
 
-            middle_row_translate =
-                next_key_translate(1, [for (j = [0:2]) pitch_angles[j][cur_col_index]], initial_translate,
-                                   roll_angles[cur_col_index], yaw_angles[cur_col_index], plate2cap_dist,
-                                   [ row_padding[0][cur_col_index], row_padding[1][cur_col_index] ]),
+    function keycap_corner(row_index, col_index, x, y, z, x_translate) =
+        let(initial_translate = [ 0, stagger[col_index], well_depth[col_index] ],
+            row_pos = row_translate(row_index, col_index, initial_translate),
+            x_offset = [ x_translate, 0, 0 ])
+            row_pos + vec_rotated_xyz(x, y, z, pitch_angles[row_index][col_index], roll_angles[col_index],
+                                      yaw_angles[col_index]) +
+            x_offset;
 
-            // positions used to compute line segments (points along right side of keycaps for the current column)
-            cur_top_top = top_row_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height + plate2cap_dist,
-                                                              pitch_angles[2][cur_col_index],
-                                                              roll_angles[cur_col_index], yaw_angles[cur_col_index]),
-            cur_top_bottom = top_row_translate + vec_rotated_xyz(spacing_x, 0, key_module_height + plate2cap_dist,
-                                                                 pitch_angles[2][cur_col_index],
-                                                                 roll_angles[cur_col_index], yaw_angles[cur_col_index]),
-            cur_middle_top =
-                middle_row_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height + plate2cap_dist,
-                                                       pitch_angles[1][cur_col_index], roll_angles[cur_col_index],
-                                                       yaw_angles[cur_col_index]),
-            cur_middle_bottom =
-                middle_row_translate + vec_rotated_xyz(spacing_x, 0, key_module_height + plate2cap_dist,
-                                                       pitch_angles[1][cur_col_index], roll_angles[cur_col_index],
-                                                       yaw_angles[cur_col_index]),
-            cur_bottom_top =
-                initial_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height + plate2cap_dist,
-                                                    pitch_angles[0][cur_col_index], roll_angles[cur_col_index],
-                                                    yaw_angles[cur_col_index]),
-            cur_bottom_bottom =
-                initial_translate + vec_rotated_xyz(spacing_x, 0, key_module_height + plate2cap_dist,
-                                                    pitch_angles[0][cur_col_index], roll_angles[cur_col_index],
-                                                    yaw_angles[cur_col_index])
+    function keycap_top_corners(row_index, col_index, x_translate) =
+        let(z = key_module_height + plate2cap_dist,
+            back_left = keycap_corner(row_index, col_index, 0, 0, z, x_translate),
+            back_right = keycap_corner(row_index, col_index, spacing_x, 0, z, x_translate),
+            front_right = keycap_corner(row_index, col_index, spacing_x, spacing_y, z, x_translate),
+            front_left = keycap_corner(row_index, col_index, 0, spacing_y, z, x_translate))
+            [ back_left, back_right, front_right, front_left ];
 
-            // array to store tranlsates for comparisons
-            // translates = [10, 15, 3, 7, 50, 9, 1, 2]
-            )
+    function keycap_top_edges(row_index, col_index, x_translate) =
+        let(corners = keycap_top_corners(row_index, col_index, x_translate))
+            [
+                [ corners[0], corners[1] ],
+                [ corners[1], corners[2] ],
+                [ corners[2], corners[3] ],
+                [ corners[3], corners[0] ]
+            ];
 
-                    cur_col_index == 0
-            ? col_index == 0 ? 0 // first column so the translate is 0 -- unnecessary to call for first column
-                             :   // cur_col is 0 so we pass the current values
-                  // next_col_x_translate_new(1, col_index, top_top, top_bottom, middle_top, middle_bottom, bottom_top,
-                  // bottom_bottom, 0)
+    function column_keycap_top_edges(col_index, x_translate) =
+        [for (row_index = [0:2], edge = keycap_top_edges(row_index, col_index, x_translate)) edge];
 
-                  echo("LEEEE TRANS", top_row_translate, middle_row_translate) top_row_translate
+    function required_column_x_translate(prev_edges, cur_edges) =
+        max(0, max([for (prev_edge = prev_edges, cur_edge = cur_edges)
+                    min_x_translate(prev_edge[0], prev_edge[1], cur_edge[0], cur_edge[1])]));
 
-            // next_col_x_translate_new(1, col_index, cur_top_top, cur_top_bottom, cur_middle_top, cur_middle_bottom,
-            // cur_bottom_top, cur_bottom_bottom, 0)
-            : // 0 not cur index find max translate from the min translates
-            echo("PREV: top_top", top_top, "top_bottom", top_bottom, "middle_top", middle_top, "middle_bottom",
-                 middle_bottom, "bottom_top", bottom_top, "bottom_bottom", bottom_bottom)
-                echo("CUR : top_top", cur_top_top, "top_bottom", cur_top_bottom, "middle_top", cur_middle_top,
-                     "middle_bottom", cur_middle_bottom, "bottom_top", cur_bottom_top, "bottom_bottom",
-                     cur_bottom_bottom)
-                    let(min_translates =
-                            [
-                                // compare prev top line segment with all current line segments
-                                min_x_translate(top_top, top_bottom, cur_top_top, cur_top_bottom),
-                                min_x_translate(top_top, top_bottom, cur_middle_top, cur_middle_bottom),
-                                min_x_translate(top_top, top_bottom, cur_bottom_top, cur_bottom_bottom),
-
-                                // compare prev middle line segment with all current line segments
-                                min_x_translate(middle_top, middle_bottom, cur_top_top, cur_top_bottom),
-                                min_x_translate(middle_top, middle_bottom, cur_middle_top, cur_middle_bottom),
-                                min_x_translate(middle_top, middle_bottom, cur_bottom_top, cur_bottom_bottom),
-
-                                // compare prev bottom line segment with all current line segments
-                                min_x_translate(bottom_top, bottom_bottom, cur_top_top, cur_top_bottom),
-                                min_x_translate(bottom_top, bottom_bottom, cur_middle_top, cur_middle_bottom),
-                                min_x_translate(bottom_top, bottom_bottom, cur_bottom_top, cur_bottom_bottom)
-                            ])
-
-                        echo("MIN_TRANSLATES", min_translates)
-
-                            echo("cur col index", cur_col_index)
-
-                                cur_top_top;
-
-    // echo("Line angle", line_angle([0, 0], [-5, -0.00001]));
-    //
-    // echo("Point on line", point_on_line([0, 0], [-5, 13], -2));
-
-    // function next_col_x_translate_new(cur_col_index, col_index, initial_x_translate) =
-    //     let ( init_point = [0, 0, 0])
-    //         next_col_x_translate_helper(cur_col_index, col_index, initial_x_translate, init_point, init_point,
-    //         init_point, init_point, init_point, init_point);
-
-    // current_translate = next_key_translate(j, col_pitches, initial_translate, roll_angles[i], yaw_angles[i],
-    // plate2cap_dist, [row_padding[0][i], row_padding[1][i]]),
-
-    // function vec_rotated_xyz(x, y, z, rotation_x, rotation_y, rotation_z) =
-
-    // function next_col_x_translate_new(cur_col_index, col_index, top_top, top_bottom, middle_top, middle_bottom,
-    //                                   bottom_top, bottom_bottom, accumulated_min_x_translate) =
+    function next_col_x_translate_new(cur_col_index, col_index, prev_edges = [], accumulated_x_translate = 0) =
+        cur_col_index == 0
+            ? col_index == 0
+                ? 0
+                : next_col_x_translate_new(1, col_index, column_keycap_top_edges(0, 0), 0)
+            : let(cur_x_translate =
+                      required_column_x_translate(prev_edges, column_keycap_top_edges(cur_col_index, 0)),
+                  cur_edges = column_keycap_top_edges(cur_col_index, cur_x_translate))
+                  cur_col_index == col_index
+                      ? cur_x_translate
+                      : next_col_x_translate_new(cur_col_index + 1, col_index, cur_edges, cur_x_translate);
 
     // translate([0, 0, -1])
-    translate(next_col_x_translate_new(0, 2, [ 0, 0, 0 ], [ 0, 0, 0 ], [ 0, 0, 0 ], [ 0, 0, 0 ], [ 0, 0, 0 ],
-                                       [ 0, 0, 0 ], 0)) color("yellow") cube([ 1, 1, 10 ]);
+    translate([
+        next_col_x_translate_new(0, 5),
+        0, 0
+    ]) color("orange") cube([ 1, 1, 10 ]);
 
     // ==========================================================
     //                          For testing
     // ==========================================================
     let(j = 2, i = 0,
         initial_translate =
-            [ next_col_x_translate(0, i, 0) + (i > 0 ? compute_col_padding(0, i, 0) : 0), stagger[i], well_depth[i] ],
+            [ next_col_x_translate_new(0, i) + (i > 0 ? compute_col_padding(0, i, 0) : 0), stagger[i], well_depth[i] ],
         col_pitches = [for (j = [0:2]) pitch_angles[j][i]])
     {
         echo("i and j", i, j);
@@ -220,22 +183,7 @@ module main_keys(stagger = [ 0, 2, 8, 3, -7, -7 ],
                                      [ row_padding[0][i], row_padding[1][i] ])) color("indigo") cube([ 1, 1, 1 ]);
     }
 
-    // translate([-0.05, -0.05, -0.05])
-    // translate([0, -50, -40])
-    // translate(next_col_x_translate_new(0, 2, [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], 0))
-    //   color("red")
-    //   cube([0.1, 200, 200]);
-
-    // echo("Next col translate return vec", next_col_x_translate_new(0, 1, 0));
-
-    echo("TRANSLATE TEST", next_col_x_translate_new(0, 1, [ 0, 0, 0 ], [ 0, 0, 0 ], [ 0, 0, 0 ], [ 0, 0, 0 ],
-                                                    [ 0, 0, 0 ], [ 0, 0, 0 ], 0));
-
-    // cur_col_index == col_index
-    //     ? // return the x_translate value
-    //     : // compute min_translate for top and bottom line segments
-    //         // select the biggest of the two as the translate for this column.
-    //             // compute the needed x_translate for the point bottom
+    echo("TRANSLATE TEST", [for (i = [0:5]) next_col_x_translate_new(0, i)]);
 
     // initial location would be prev tranlate and the corresponding pos in cube to find the line segemnt
 
@@ -245,24 +193,12 @@ module main_keys(stagger = [ 0, 2, 8, 3, -7, -7 ],
             ? cur_col_padding
             : compute_col_padding(cur_col_index + 1, col_index, cur_col_padding + column_padding[cur_col_index]);
 
-    // echo()
-    // echo(vec_rotated_xyz(spacing_x, 0, key_module_height, pitch_angles[0][0], roll_angles[0], yaw_angles[0])[0])
-    // echo("next_col_translate", next_col_x_translate(0, 2, 0));
     prev_x_max = 0;
-
-    // echo("compute_col_padding", compute_col_padding(0, 1, 0));
-
-    // color("indigo")
-    // translate([next_col_x_translate(0, 5, 0) + vec_rotated_xyz(0, 0, key_module_height, pitch_angles[0][5],
-    // roll_angles[5], yaw_angles[5])[0], -200, -200])
-    //     cube([0.00001, 400, 400]);
 
     // WORK IN PROGRESS -- continue later does not work atm
     function aligned_translate(prev, curr, i) =
         let(test = vec_rotated_xyz_generic(0, abs(prev[1] - curr[1]), 0, pitch_angles[0][i], roll_angles[i],
-                                           yaw_angles[i])) curr[1] -
-                    prev[1] >
-                0
+                                           yaw_angles[i])) curr[1] - prev[1] > 0
             ? prev + (abs(prev[1] - curr[1]) / test[1]) * test  // prev translate
             : curr + (abs(prev[1] - curr[1]) / test[1]) * test; // curr translate
 
@@ -287,68 +223,26 @@ module main_keys(stagger = [ 0, 2, 8, 3, -7, -7 ],
 
     module column_gap_filler(i, j, initial_translate, prev_initial_translate)
     {
-        // let (
-        //         prev = prev_initial_translate + vec_rotated_xyz(spacing_x, 0, 0, pitch_angles[0][i-1],
-        //         roll_angles[i-1], yaw_angles[i-1]), curr = initial_translate + vec_rotated_xyz(0, 0, 0,
-        //         pitch_angles[0][i], roll_angles[i], yaw_angles[i])
-        // ){
-
         if (i != 0)
         {
             if (j == 0)
             {
                 // bottom row -- no need to account for row filler
-
-                // echo("prev", prev_initial_translate);
-
-                // echo("Top left back", aligned_translate_bottom(key_module_height, initial_translate,
-                // prev_initial_translate, i, true));
                 translate(aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i,
                                                    true)) cube([ 1, 1, 1 ]);
 
-                // echo("Top right back", aligned_translate_bottom(key_module_height, initial_translate,
-                // prev_initial_translate, i, false));
                 translate(aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i,
                                                    false)) cube([ 1, 1, 1 ]);
 
-                // echo("Bottom left back", aligned_translate_bottom(0, initial_translate, prev_initial_translate, i,
-                // true));
                 translate(aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true))
                     cube([ 1, 1, 1 ]);
 
-                // echo("Bottom right back", aligned_translate_bottom(0, initial_translate, prev_initial_translate, i,
-                // false));
                 translate(aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false))
                     cube([ 1, 1, 1 ]);
 
                 translate([ -0.5, 0, 0 ])
                     translate(initial_translate + vec_rotated_xyz(0, spacing_y, 0, pitch_angles[0][i], roll_angles[i],
                                                                   yaw_angles[i])) cube([ 1, 1, 1 ]);
-
-                // translate(prev_initial_translate + vec_rotated_xyz(spacing_x, 0, 0, pitch_angles[0][i-1],
-                // roll_angles[i-1], yaw_angles[i-1])
-                //     cube([1, 1, 1]);
-
-                // if (
-                //      // bottom right back x-value > bottom right back x-value
-                //      aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false)[0] >
-                //      aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true)[0]
-                //      &&
-                //      // top right back x-value > top left back x-value
-                //      aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i,
-                //      true)[0] > aligned_translate_bottom(key_module_height, initial_translate,
-                //      prev_initial_translate, i, false)[0]
-                //      &&
-                //      // bottom rigth front x-value > bottom left front x-value
-                //      (initial_translate + vec_rotated_xyz(0, spacing_y, 0, pitch_angles[0][i], roll_angles[i],
-                //      yaw_angles[i]))[0] > (prev_initial_translate + vec_rotated_xyz(spacing_x, spacing_y, 0,
-                //      pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))[0]
-                //      &&
-                //      // top right front x-value > top left front x-value
-                //      (initial_translate + vec_rotated_xyz(0, spacing_y, key_module_height, pitch_angles[0][i],
-                //      roll_angles[i], yaw_angles[i]))[0] > (prev_initial_translate + vec_rotated_xyz(spacing_x,
-                //      spacing_y, key_module_height, pitch_angles[0][i-1], roll_angles[i-1], yaw_angles[i-1]))[0]
-                // ){
                 polyhedron(
                     points =
                         [
@@ -363,21 +257,15 @@ module main_keys(stagger = [ 0, 2, 8, 3, -7, -7 ],
                             // front is side facing away from the user (towards monitor/wall)
 
                             // rear points
-                            aligned_translate_bottom(0, initial_translate, prev_initial_translate, i,
-                                                     false), // bottom right back
-                            aligned_translate_bottom(0, initial_translate, prev_initial_translate, i,
-                                                     true), // bottom left back
-                            aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i,
-                                                     false), // top right back
-                            aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i,
-                                                     true), // top left back
+                            aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, false), // bottom right back
+                            aligned_translate_bottom(0, initial_translate, prev_initial_translate, i, true),  // bottom left back
+                            aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, false), // top right back
+                            aligned_translate_bottom(key_module_height, initial_translate, prev_initial_translate, i, true), // top left back
 
                             // front points
                             initial_translate + vec_rotated_xyz(0, spacing_y, 0, pitch_angles[0][i], roll_angles[i],
                                                                 yaw_angles[i]), // bottom right front
-                            prev_initial_translate + vec_rotated_xyz(spacing_x, spacing_y, 0, pitch_angles[0][i - 1],
-                                                                     roll_angles[i - 1],
-                                                                     yaw_angles[i - 1]), // bottom left front
+                            prev_initial_translate + vec_rotated_xyz(spacing_x, spacing_y, 0, pitch_angles[0][i - 1], roll_angles[i - 1], yaw_angles[i - 1]), // bottom left front
                             initial_translate + vec_rotated_xyz(0, spacing_y, key_module_height, pitch_angles[0][i],
                                                                 roll_angles[i], yaw_angles[i]), // top right front
                             prev_initial_translate + vec_rotated_xyz(spacing_x, spacing_y, key_module_height,
@@ -391,17 +279,14 @@ module main_keys(stagger = [ 0, 2, 8, 3, -7, -7 ],
                     // you go around in a circle for each face and you must follow the curve direction of your fingers
                     // when pointing them into the face to know the correct indecie to use for that corner)
                     // [See documentation on polyhedron on openscad wiki]
-                    faces =
-                        [
-                            [ 0, 4, 5, 1 ], // bottom
-                            [ 2, 3, 7, 6 ], // top
-                            [ 0, 1, 3, 2 ], // back
-                            [ 1, 5, 7, 3 ], // right
-                            [ 4, 6, 7, 5 ], // front
-                            [ 0, 2, 6, 4 ]
-                        ] // left
-                );
-                // }
+                    faces = [
+                        [ 0, 4, 5, 1 ], // bottom
+                        [ 2, 3, 7, 6 ], // top
+                        [ 0, 1, 3, 2 ], // back
+                        [ 1, 5, 7, 3 ], // right
+                        [ 4, 6, 7, 5 ], // front
+                        [ 0, 2, 6, 4 ]  // left
+                    ]);
             }
             else
             {
@@ -422,13 +307,13 @@ module main_keys(stagger = [ 0, 2, 8, 3, -7, -7 ],
         let (
                 // initial_translate = [spacing_x * i, stagger[i], well_depth[i]], 
                 initial_translate = [
-                                        next_col_x_translate(0, i, 0) + (i>0 ? compute_col_padding(0, i, 0) : 0),
+                                        next_col_x_translate_new(0, i) + (i>0 ? compute_col_padding(0, i, 0) : 0),
                                         stagger[i], 
                                         well_depth[i]
                                     ], 
                 prev_initial_translate = i != 0 ?
                                     [
-                                        next_col_x_translate(0, i-1, 0) + ((i-1)>0 ? compute_col_padding(0, i-1, 0) : 0),
+                                        next_col_x_translate_new(0, i-1) + ((i-1)>0 ? compute_col_padding(0, i-1, 0) : 0),
                                         stagger[i-1], 
                                         well_depth[i-1]
                                     ] 
@@ -436,76 +321,26 @@ module main_keys(stagger = [ 0, 2, 8, 3, -7, -7 ],
                 col_pitches = [for (j = [0:2]) pitch_angles[j][i]]
             )
         {
-
-            // echo("initial_translate", initial_translate);
-            // if ( i > 0 ) {
-            //     echo("Col:", i, " angle_diff ", roll_angles[i-1] - roll_angles[i]);
-            // }
-
-            // cube behind and on top of each column
-
             if (i == 9)
             {
-                // translate(vec_rotated_xyz_generic(0, 50, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
-                //     cube([1, 1, 1]);
-
-                // translate(initial_translate)
-                // translate(vec_rotated_xyz(0, 0, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
-                // translate(-vec_rotated_xyz_generic(25-spacing_x/2, 50, 25-key_module_height/2, pitch_angles[0][i],
-                // roll_angles[i], yaw_angles[i])) rotate([pitch_angles[0][i], roll_angles[i], yaw_angles[i]])
-                //         cube([50, 50, 50]);
-
-                // bottom_sub_box(pitch_angles[0][i], roll_angles[i], yaw_angles[i], initial_translate, spacing_x,
-                // key_module_height);
-
-                // top_sub_box(pitch_angles[2][i], roll_angles[i], yaw_angles[i], , spacing_x, key_module_height);
-
                 let(prev = prev_initial_translate + vec_rotated_xyz(spacing_x, 0, 0, pitch_angles[0][i - 1],
                                                                     roll_angles[i - 1], yaw_angles[i - 1]),
                     curr =
                         initial_translate + vec_rotated_xyz(0, 0, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
                 {
-
-                    // translate(vec_rotated_xyz(0, 0, 0, pitch_angles[0][i], roll_angles[i], yaw_angles[i]))
-                    // translate(initial_translate + vec_rotated_xyz(0, 0, 0, pitch_angles[0][i], roll_angles[i],
-                    // yaw_angles[i]))
                     if (curr[1] - prev[1] > 0)
                     { // current col is higer up (y value) than the previous
-                        // echo("veccy deccy succky bucky yeah", aligned_translate_update(key_module_height,
-                        // prev_initial_translate, initial_translate, i, true)); function aligned_translate_update(y, z,
-                        // prev_initial_translate, initial_translate, i, for_prev) = echo("text",
-                        // aligned_translate_update(0, prev_initial_translate, initial_translate, i, true));
-                        // translate(aligned_translate_update(0, prev_initial_translate, initial_translate, i, true))
-                        // translate(aligned_translate(prev, curr, i-1))
-                        // color("indigo")
-                        // cube([1, 1, 1]);
-
-                        // echo("Currrrrrrrrr", curr);
-                        // translate(curr)
-                        // cube([1, 1, 1]);
-
                         if (i != 0)
                         {
                             color("aquamarine", 0.5) column_gap_filler(i, 0, initial_translate, prev_initial_translate);
                         }
-
-                        // top cubes
-                        // translate(curr)
-                        // cube([1, 1, 1]);
                     }
                     else
                     { // current col is lower down (y value) than the previous
-                        // echo("prevv", prev);
-                        // translate(prev)
-                        // cube([1, 1, 1]);
                         if (i != 0)
                         {
-                            color("aquamarine", 0.5) column_gap_filler(i, 0, initial_translate, prev_initial_translate);
+                            color("pink", 0.5) column_gap_filler(i, 0, initial_translate, prev_initial_translate);
                         }
-                        // echo("curr", aligned_translate(prev, curr, i));
-                        // translate(aligned_translate(prev, curr, i))
-                        // color("pink")
-                        // cube([1, 1, 1]);
                     }
                 }
             }
@@ -522,12 +357,6 @@ module main_keys(stagger = [ 0, 2, 8, 3, -7, -7 ],
                                             : [] // not used when j == 0
                 )
                 {
-
-                    // if (i == 0 && j == 2){
-                    //         top_sub_box(pitch_angles[2][i], roll_angles[i], yaw_angles[i], current_translate,
-                    //         spacing_y, key_module_height);
-                    // }
-
                     if (!(i == 5 && j >= last_col_key_count))
                     { // to allow for 2 and 1 key last column
                         // colors used to show the column interference between keycaps different colors for clarity
@@ -551,12 +380,6 @@ module main_keys(stagger = [ 0, 2, 8, 3, -7, -7 ],
                                     centered_key(rotation_x = pitch_angles[j][i], rotation_y = roll_angles[i],
                                                  rotation_z = yaw_angles[i], plate2cap_dist = plate2cap_dist,
                                                  show_keycap = show_keycap, keycap_color = colors[i]);
-
-                                // place a cube on the top left corner of this key
-
-                                // translate(current_translate + vec_rotated_xyz(spacing_x, spacing_y,
-                                // key_module_height+plate2cap_dist, pitch_angles[j][i], roll_angles[i], yaw_angles[i]))
-                                //     cube([1, 1, 1]);
                             }
                             else
                             {
@@ -600,38 +423,19 @@ module main_keys(stagger = [ 0, 2, 8, 3, -7, -7 ],
                                                                             roll_angles[i],
                                                                             yaw_angles[i]), // 7 -- bottom left front
                                     ],
-                                faces =
-                                    [
-                                        [ 0, 1, 2, 3 ], // bottom -- top of prev key
-                                        [ 4, 5, 1, 0 ], // back   -- back side (hotswap side)
-                                        [ 7, 6, 5, 4 ], // top    -- bottom of current key
-                                        [ 5, 6, 2, 1 ], // right  -- towards next column to right
-                                        [
-                                            6, 7, 3, 2
-                                        ], // front  -- front of case (where switchs are placed what you see top of
-                                           // desk)
-                                        [ 7, 4, 0, 3 ]
-                                    ] // left   -- towards prev column to left
-
-                                // ######## DID NOT RENDER ########
-                                // for future reference -- this did not render but did preview correctly
-                                // the one above does preview and render correctly only ordering is different
-                                // so that matters. Not exacly sure why and how but consider this example if
-                                // encountering issues like this in the future (I think its the order of the sides that
-                                // must be connected from previous to last don't think ordering of the corners in one
-                                // face matters but could be wrong)
-                                //[
-                                //     [0, 1, 2, 3], // bottom -- top of prev key
-                                //     [4, 5, 6, 7], // top    -- bottom of current key
-                                //     [0, 1, 5, 4], // back   -- back side (hotswap side)
-                                //     [1, 2, 6, 5], // right  -- towards next column to right
-                                //     [2, 3, 7, 6], // front  -- front of case (where switchs are placed what you see
-                                //     top of desk) [3, 0, 4, 7]  // left   -- towards prev column to left
-                                // ]
-                            );
+                                faces = [
+                                    [ 0, 1, 2, 3 ], // bottom -- top of prev key
+                                    [ 4, 5, 1, 0 ], // back   -- back side (hotswap side)
+                                    [ 7, 6, 5, 4 ], // top    -- bottom of current key
+                                    [ 5, 6, 2, 1 ], // right  -- towards next column to right
+                                    [ 6, 7, 3, 2 ], // front  -- front of case
+                                    [ 7, 4, 0, 3 ]  // left   -- towards prev column to left
+                                ]);
                         }
 
-                        color("aquamarine", 0.5) column_gap_filler(i, j, initial_translate, prev_initial_translate);
+                        // TODO: Make this a part of the case rather than the key rows (make padding between and support
+                        // down to plate with screw points for the thikest ones
+                        // color("green", 0.5) column_gap_filler(i, j, initial_translate, prev_initial_translate);
                     }
                 }
             }
@@ -639,4 +443,4 @@ module main_keys(stagger = [ 0, 2, 8, 3, -7, -7 ],
     }
 }
 
-main_keys(show_keycap = false);
+main_keys(show_keycap = true);
